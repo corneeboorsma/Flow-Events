@@ -504,10 +504,6 @@
       document.getElementById('wizard-overlay').classList.remove('open');
     }
 
-    document.getElementById('wizard-overlay').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeWizard();
-    });
-
     function renderThemeGrid() {
       document.getElementById('theme-grid').innerHTML = Object.entries(THEMES).map(([key, t]) => `
         <div class="theme-option ${selectedTheme === key ? 'selected' : ''}" onclick="selectTheme('${key}')">
