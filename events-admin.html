@@ -302,6 +302,12 @@
         <div class="form-group">
           <label>Beschrijving</label>
           <textarea id="w-desc" rows="3" placeholder="Vertel iets over dit event..." style="width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.92rem;background:var(--bg-soft);outline:none;resize:none"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap" id="ai-toolbar">
+            <button type="button" class="btn btn-outline btn-sm" onclick="aiAssist('spelling')" id="ai-btn-spelling">✍️ Spellingcheck</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="aiAssist('enthusiastic')" id="ai-btn-enthusiastic">🚀 Enthousiaster</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="aiAssist('friendly')" id="ai-btn-friendly">🤝 Vriendelijker</button>
+            <span id="ai-status" style="font-size:0.78rem;color:var(--text-light);align-self:center;display:none">Bezig...</span>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -908,6 +914,37 @@
       renderThemeGrid();
       updateWizardStep();
       document.getElementById('wizard-overlay').classList.add('open');
+    }
+
+    // ─── AI ASSIST ───
+    const AI_PROXY_URL = 'https://flow-events-ai.cornee-boorsma.workers.dev';
+
+    async function aiAssist(mode) {
+      const textarea = document.getElementById('w-desc');
+      const text = textarea.value.trim();
+      if (!text) { alert('Vul eerst een beschrijving in.'); return; }
+
+      const btns = ['spelling', 'enthusiastic', 'friendly'].map(m => document.getElementById(`ai-btn-${m}`));
+      const status = document.getElementById('ai-status');
+
+      btns.forEach(b => b.disabled = true);
+      status.style.display = 'inline';
+
+      try {
+        const res = await fetch(AI_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, mode }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const { result } = await res.json();
+        textarea.value = result;
+      } catch (err) {
+        alert('AI-fout: ' + err.message);
+      } finally {
+        btns.forEach(b => b.disabled = false);
+        status.style.display = 'none';
+      }
     }
 
     // ─── INIT ───
