@@ -295,6 +295,11 @@
               </div>
             </div>
             <div id="form-error" style="display:none;font-size:0.83rem;color:var(--danger);margin-bottom:8px"></div>
+            ${ev.price ? `
+            <div style="background:var(--theme-hero,var(--accent-light));border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:0.85rem;opacity:0.8">Totaal te betalen</span>
+              <span style="font-size:1.3rem;font-weight:700;color:var(--theme-accent,var(--primary))">€ ${parseFloat(ev.price).toFixed(2)}</span>
+            </div>` : ''}
             <button class="btn btn-theme" type="submit" id="submit-btn">Aanmelden →</button>
           </form>`;
       }
@@ -309,6 +314,7 @@
             ${ev.time ? `<span>🕐 ${ev.time}</span>` : ''}
             ${ev.duration ? `<span>⏱ ${ev.duration}</span>` : ''}
             ${ev.location ? `<span>📍 ${ev.location}</span>` : ''}
+            ${ev.price ? `<span>💶 € ${parseFloat(ev.price).toFixed(2)} p.p.</span>` : ''}
           </div>
         </div>
         <div class="event-body">

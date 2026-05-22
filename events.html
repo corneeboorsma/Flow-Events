@@ -196,7 +196,10 @@
             </div>
             <div class="event-card-footer">
               ${spotsBadge}
-              <span style="font-size:0.82rem;color:var(--primary);font-weight:600">Meer info →</span>
+              <span style="display:flex;align-items:center;gap:10px">
+                ${ev.price ? `<span style="font-size:0.82rem;font-weight:700;color:var(--text-mid)">💶 € ${parseFloat(ev.price).toFixed(2)}</span>` : ''}
+                <span style="font-size:0.82rem;color:var(--primary);font-weight:600">Meer info →</span>
+              </span>
             </div>
           </a>`;
       }));

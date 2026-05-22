@@ -327,6 +327,16 @@
           <label>Locatie</label>
           <input type="text" id="w-location" placeholder="bijv. Flow Coffeebar, Enschede">
         </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.88rem;font-weight:500">
+            <input type="checkbox" id="w-paid" onchange="togglePriceField()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)">
+            Deelname is betaald
+          </label>
+        </div>
+        <div class="form-group" id="w-price-group" style="display:none">
+          <label>Prijs per persoon (€)</label>
+          <input type="number" id="w-price" min="0" step="0.01" placeholder="bijv. 12.50">
+        </div>
       </div>
 
       <!-- Step 3: Capaciteit & publiceren -->
@@ -438,6 +448,9 @@
         document.getElementById('w-time').value = existing.time || '';
         document.getElementById('w-duration').value = existing.duration || '';
         document.getElementById('w-location').value = existing.location || '';
+        document.getElementById('w-paid').checked = !!existing.price;
+        document.getElementById('w-price').value = existing.price || '';
+        document.getElementById('w-price-group').style.display = existing.price ? 'block' : 'none';
         document.getElementById('w-max').value = existing.maxAttendees || '';
         document.getElementById('w-status').value = existing.status || 'draft';
       } else {
@@ -447,6 +460,9 @@
         document.getElementById('w-time').value = '';
         document.getElementById('w-duration').value = '';
         document.getElementById('w-location').value = 'Flow Coffeebar, Rijssen';
+        document.getElementById('w-paid').checked = false;
+        document.getElementById('w-price').value = '';
+        document.getElementById('w-price-group').style.display = 'none';
       }
 
       renderThemeGrid();
@@ -508,11 +524,13 @@
       const duration = document.getElementById('w-duration').value;
       const location = document.getElementById('w-location').value;
       const max = document.getElementById('w-max').value;
+      const price = document.getElementById('w-paid').checked ? document.getElementById('w-price').value : null;
 
       document.getElementById('wizard-preview').innerHTML = `
         <strong>${theme.emoji} ${theme.label}</strong> — ${title}<br>
         ${date ? '📅 ' + formatDate(date) : ''} ${time ? '· 🕐 ' + time : ''} ${duration ? '· ⏱ ' + duration : ''}<br>
         ${location ? '📍 ' + location + '<br>' : ''}
+        ${price ? '💶 € ' + parseFloat(price).toFixed(2) + ' p.p.<br>' : ''}
         ${max ? '👥 Max. ' + max + ' deelnemers' : '👥 Onbeperkt'}
       `;
     }
@@ -549,6 +567,7 @@
       btn.textContent = 'Bezig...';
 
       const maxVal = document.getElementById('w-max').value;
+      const priceVal = document.getElementById('w-paid').checked ? document.getElementById('w-price').value : '';
       const data = {
         theme: selectedTheme,
         title: document.getElementById('w-title').value.trim(),
@@ -557,6 +576,7 @@
         time: document.getElementById('w-time').value,
         duration: document.getElementById('w-duration').value.trim(),
         location: document.getElementById('w-location').value.trim(),
+        price: priceVal ? parseFloat(priceVal) : null,
         maxAttendees: maxVal ? parseInt(maxVal) : null,
         status: document.getElementById('w-status').value,
       };
@@ -909,11 +929,20 @@
       document.getElementById('w-time').value = copy.time;
       document.getElementById('w-duration').value = copy.duration;
       document.getElementById('w-location').value = copy.location;
+      document.getElementById('w-paid').checked = !!ev.price;
+      document.getElementById('w-price').value = ev.price || '';
+      document.getElementById('w-price-group').style.display = ev.price ? 'block' : 'none';
       document.getElementById('w-max').value = copy.maxAttendees || '';
       document.getElementById('w-status').value = 'draft';
       renderThemeGrid();
       updateWizardStep();
       document.getElementById('wizard-overlay').classList.add('open');
+    }
+
+    function togglePriceField() {
+      const paid = document.getElementById('w-paid').checked;
+      document.getElementById('w-price-group').style.display = paid ? 'block' : 'none';
+      if (!paid) document.getElementById('w-price').value = '';
     }
 
     // ─── AI ASSIST ───
