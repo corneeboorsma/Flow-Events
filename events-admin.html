@@ -306,6 +306,7 @@
                     <span class="status-pill ${ev.status}">${ev.status === 'published' ? 'Gepubliceerd' : 'Concept'}</span>
                     <button class="btn-icon" onclick="editEvent('${ev.id}')" title="Bewerken">✏️</button>
                     <button class="btn-icon" onclick="viewRegistrations('${ev.id}')" title="Aanmeldingen">👥</button>
+                    <a class="btn-icon" href="event.html?id=${ev.id}" target="_blank" title="Bekijk eventpagina">🔗</a>
                     <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Verwijderen">🗑️</button>
                   </div>`;
               }).join('')
