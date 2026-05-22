@@ -219,7 +219,16 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 400; }
 .empty-state { text-align: center; padding: 80px 20px; color: var(--text-light); }
 .empty-state .big-emoji { font-size: 3.5rem; margin-bottom: 16px; display: block; }
 
-/* ─── RESPONSIVE ─── */
+/* ─── FOOTER ─── */
+.footer {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  border-top: 1px solid var(--border);
+  background: var(--white);
+  letter-spacing: 0.03em;
+}
 @media (max-width: 640px) {
   .header { padding: 0 16px; height: auto; min-height: 64px; }
   .header-logo .script { font-size: 3rem; }
