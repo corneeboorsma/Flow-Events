@@ -139,14 +139,57 @@
     .status-pill.draft { background: var(--bg-soft); color: var(--text-light); }
     .status-pill.published { background: #e8f5ec; color: var(--success); }
 
-    /* ─── REGISTRATIONS PANEL ─── */
-    .reg-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 0;
+    /* ─── REGISTRATIONS TABLE ─── */
+    .reg-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+    }
+
+    .reg-table th {
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .reg-table td {
+      padding: 12px 14px;
       border-bottom: 1px solid var(--border);
-      font-size: 0.88rem;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .reg-table tr:last-child td { border-bottom: none; }
+    .reg-table tr:hover td { background: var(--bg-soft); }
+
+    .reg-table .reg-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      margin-right: 8px;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    .export-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
     }
     .reg-row:last-child { border-bottom: none; }
     .reg-avatar {
@@ -520,39 +563,126 @@
       const regs = await getRegistrations(eventId);
       const theme = THEMES[ev.theme] || THEMES.flow;
 
+      const tableRows = regs.length === 0
+        ? `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-light)">Nog geen aanmeldingen.</td></tr>`
+        : regs.map((r, i) => `
+            <tr>
+              <td style="color:var(--text-light);font-size:0.78rem">${i + 1}</td>
+              <td><span class="reg-avatar">${r.name.charAt(0).toUpperCase()}</span>${r.name}</td>
+              <td>${r.email}</td>
+              <td>${r.phone || '—'}</td>
+              <td>${r.address || '—'}</td>
+              <td style="color:var(--text-light);font-size:0.78rem;white-space:nowrap">${new Date(r.registeredAt).toLocaleDateString('nl-BE', {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+            </tr>`).join('');
+
       main.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap">
           <button class="btn btn-outline btn-sm" onclick="renderRegistrationsOverview()">← Terug</button>
           <div class="admin-section-title" style="margin-bottom:0">${ev.title}</div>
           <span class="status-pill published" style="background:${theme.accent}22;color:${theme.accent}">${theme.emoji} ${theme.label}</span>
         </div>
-        <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap">
-          <div class="form-card" style="flex:1;min-width:140px;padding:16px 20px">
+
+        <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+          <div class="form-card" style="flex:1;min-width:120px;padding:16px 20px">
             <div style="font-size:0.8rem;color:var(--text-light)">Aangemeld</div>
             <div style="font-size:1.8rem;font-weight:700;color:var(--primary)">${regs.length}</div>
           </div>
           ${ev.maxAttendees ? `
-          <div class="form-card" style="flex:1;min-width:140px;padding:16px 20px">
+          <div class="form-card" style="flex:1;min-width:120px;padding:16px 20px">
             <div style="font-size:0.8rem;color:var(--text-light)">Vrij</div>
             <div style="font-size:1.8rem;font-weight:700;color:var(--success)">${Math.max(0, ev.maxAttendees - regs.length)}</div>
           </div>` : ''}
         </div>
-        <div class="form-card" style="max-width:600px">
-          ${regs.length === 0
-            ? '<div style="text-align:center;padding:32px;color:var(--text-light)">Nog geen aanmeldingen.</div>'
-            : regs.map(r => `
-              <div class="reg-row">
-                <div class="reg-avatar">${r.name.charAt(0).toUpperCase()}</div>
-                <div style="flex:1;min-width:0">
-                  <div class="reg-name">${r.name}</div>
-                  <div class="reg-email">${r.email}</div>
-                  ${r.phone ? `<div class="reg-email">📱 ${r.phone}</div>` : ''}
-                  ${r.address ? `<div class="reg-email">📍 ${r.address}</div>` : ''}
-                </div>
-                <span class="reg-time">${new Date(r.registeredAt).toLocaleDateString('nl-BE', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
-              </div>`).join('')
-          }
+
+        <div class="export-bar">
+          <button class="btn btn-outline btn-sm" onclick="exportExcel('${eventId}')">⬇ Excel</button>
+          <button class="btn btn-outline btn-sm" onclick="exportPdf('${eventId}')">⬇ PDF</button>
+        </div>
+
+        <div style="overflow-x:auto;background:var(--white);border:1px solid var(--border);border-radius:var(--radius)">
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Naam</th>
+                <th>E-mail</th>
+                <th>Telefoon</th>
+                <th>Adres</th>
+                <th>Aangemeld op</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
         </div>`;
+    }
+
+    async function exportExcel(eventId) {
+      const ev = await getEvent(eventId);
+      const regs = await getRegistrations(eventId);
+
+      const header = ['#', 'Naam', 'E-mail', 'Telefoon', 'Adres', 'Aangemeld op'];
+      const rows = regs.map((r, i) => [
+        i + 1,
+        r.name,
+        r.email,
+        r.phone || '',
+        r.address || '',
+        new Date(r.registeredAt).toLocaleString('nl-BE'),
+      ]);
+
+      const csvContent = [header, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+        .join('\n');
+
+      const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `aanmeldingen-${ev.title.replace(/\s+/g, '-').toLowerCase()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function exportPdf(eventId) {
+      const ev = await getEvent(eventId);
+      const regs = await getRegistrations(eventId);
+      const theme = THEMES[ev.theme] || THEMES.flow;
+
+      const rows = regs.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.name}</td>
+          <td>${r.email}</td>
+          <td>${r.phone || '—'}</td>
+          <td>${r.address || '—'}</td>
+          <td>${new Date(r.registeredAt).toLocaleString('nl-BE')}</td>
+        </tr>`).join('');
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>Aanmeldingen — ${ev.title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 32px; color: #1a1a1a; }
+          h1 { font-size: 1.4rem; margin-bottom: 4px; }
+          .meta { font-size: 0.85rem; color: #888; margin-bottom: 24px; }
+          .pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; background:${theme.accent}22; color:${theme.accent}; margin-left:8px; }
+          table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+          th { text-align:left; padding: 8px 10px; border-bottom: 2px solid #eee; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:#888; }
+          td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; }
+          tr:nth-child(even) td { background: #fafaf8; }
+        </style>
+      </head><body>
+        <h1>${ev.title} <span class="pill">${theme.emoji} ${theme.label}</span></h1>
+        <div class="meta">${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''} · ${regs.length} aanmeldingen</div>
+        <table>
+          <thead><tr><th>#</th><th>Naam</th><th>E-mail</th><th>Telefoon</th><th>Adres</th><th>Aangemeld op</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="6" style="color:#aaa;padding:20px">Geen aanmeldingen</td></tr>'}</tbody>
+        </table>
+      </body></html>`;
+
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      win.onload = () => win.print();
     }
 
     // ─── INIT ───
