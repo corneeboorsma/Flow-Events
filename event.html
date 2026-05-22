@@ -16,6 +16,23 @@
       background: var(--theme-hero, var(--accent-light));
       padding: 56px 24px 48px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .event-hero-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .event-hero > *:not(.event-hero-img) {
+      position: relative;
+      z-index: 1;
     }
 
     .event-theme-label {
@@ -256,6 +273,7 @@
 
       document.getElementById('page-content').innerHTML = `
         <div class="event-hero">
+          <img class="event-hero-img" src="${theme.img}" alt="${ev.theme}">
           <div class="event-theme-label">${theme.emoji} ${theme.label}</div>
           <h1 class="event-title">${ev.title}</h1>
           <div class="event-meta-row">

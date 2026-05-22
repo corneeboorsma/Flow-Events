@@ -38,6 +38,17 @@
     .theme-hero-preview {
       padding: 28px 24px 24px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .theme-hero-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.18;
     }
 
     .theme-label-pill {
@@ -160,7 +171,12 @@
     <h1>Theme Preview</h1>
     <p>Alle 8 Flow Events thema's — bekijk kleuren, sfeer en UI elementen</p>
   </div>
-  <a href="events-admin.html" class="btn btn-outline btn-sm">← Admin</a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <input id="preview-title-input" type="text" placeholder="Typ een eventtitel..."
+      style="padding:8px 14px;border:1.5px solid var(--border);border-radius:30px;font-family:'Inter',sans-serif;font-size:0.9rem;outline:none;width:240px"
+      oninput="updateTitles(this.value)">
+    <a href="events-admin.html" class="btn btn-outline btn-sm">← Admin</a>
+  </div>
 </div>
 
 <div class="themes-wrap" id="themes-wrap"></div>
@@ -168,6 +184,12 @@
 <script src="events.js"></script>
 <script>
   const wrap = document.getElementById('themes-wrap');
+  const DEFAULT_TITLE = 'Een avond bij Flow';
+
+  function updateTitles(val) {
+    const title = val.trim() || DEFAULT_TITLE;
+    document.querySelectorAll('.theme-preview-title').forEach(el => el.textContent = title);
+  }
 
   Object.entries(THEMES).forEach(([key, t]) => {
     const card = document.createElement('div');
@@ -176,8 +198,9 @@
     card.innerHTML = `
       <!-- Hero -->
       <div class="theme-hero-preview" style="background:${t.hero};color:${t.text}">
+        <img class="theme-hero-img" src="${t.img}" alt="${t.label}">
         <div class="theme-label-pill" style="background:${t.accent}">${t.emoji} ${t.label}</div>
-        <div class="theme-preview-title" style="color:${t.text}">Een avond bij Flow</div>
+        <div class="theme-preview-title" style="color:${t.text}">${DEFAULT_TITLE}</div>
         <div class="theme-preview-meta">
           <span>📅 vrijdag 13 juni</span>
           <span>🕐 20:00</span>
