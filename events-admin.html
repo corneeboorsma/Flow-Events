@@ -373,7 +373,7 @@
       main.innerHTML = `<div class="admin-section-title">Events</div><p style="color:var(--text-light)">Laden...</p>`;
 
       const events = await getEvents();
-      events.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const active = events.filter(e => e.status !== 'archived').sort((a, b) => new Date(a.date) - new Date(b.date));
 
       main.innerHTML = `
         <div class="admin-section-title">Events</div>
@@ -381,9 +381,9 @@
           <button class="btn btn-primary" onclick="openWizard()">+ Nieuw event</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px" id="event-list">
-          ${events.length === 0
+          ${active.length === 0
             ? '<div class="empty-state"><span class="big-emoji">📅</span><p>Nog geen events aangemaakt.</p></div>'
-            : events.map(ev => {
+            : active.map(ev => {
                 const theme = THEMES[ev.theme] || THEMES.flow;
                 return `
                   <div class="event-row">
@@ -821,12 +821,33 @@
         .filter(e => e.status === 'archived')
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      main.innerHTML = `
-        <div class="admin-section-title">Archief</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${archived.length === 0
-            ? '<div class="empty-state"><span class="big-emoji">🗄️</span><p>Geen gearchiveerde events.</p></div>'
-            : archived.map(ev => {
+      if (archived.length === 0) {
+        main.innerHTML = `
+          <div class="admin-section-title">Archief</div>
+          <div class="empty-state"><span class="big-emoji">🗄️</span><p>Geen gearchiveerde events.</p></div>`;
+        return;
+      }
+
+      // Group by year → month
+      const grouped = {};
+      for (const ev of archived) {
+        const d = new Date(ev.date);
+        const year = d.getFullYear();
+        const month = d.getMonth(); // 0-based
+        if (!grouped[year]) grouped[year] = {};
+        if (!grouped[year][month]) grouped[year][month] = [];
+        grouped[year][month].push(ev);
+      }
+
+      const monthNames = ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+
+      const sectionsHtml = Object.keys(grouped)
+        .sort((a, b) => b - a)
+        .map(year => {
+          const monthsHtml = Object.keys(grouped[year])
+            .sort((a, b) => b - a)
+            .map(month => {
+              const evRows = grouped[year][month].map(ev => {
                 const theme = THEMES[ev.theme] || THEMES.flow;
                 return `
                   <div class="event-row">
@@ -839,9 +860,23 @@
                     <button class="btn-icon" onclick="duplicateEvent('${ev.id}')" title="Dupliceren als nieuw event">📋</button>
                     <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Definitief verwijderen">🗑️</button>
                   </div>`;
-              }).join('')
-          }
-        </div>`;
+              }).join('');
+              return `
+                <div style="margin-bottom:8px">
+                  <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-light);padding:8px 4px 6px">${monthNames[month]}</div>
+                  <div style="display:flex;flex-direction:column;gap:8px">${evRows}</div>
+                </div>`;
+            }).join('');
+          return `
+            <div style="margin-bottom:28px">
+              <div style="font-size:1.1rem;font-weight:700;color:var(--text);padding:0 4px 10px;border-bottom:2px solid var(--border);margin-bottom:12px">${year}</div>
+              ${monthsHtml}
+            </div>`;
+        }).join('');
+
+      main.innerHTML = `
+        <div class="admin-section-title">Archief</div>
+        <div>${sectionsHtml}</div>`;
     }
 
     async function duplicateEvent(id) {
