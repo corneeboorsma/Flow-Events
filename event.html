@@ -63,10 +63,11 @@
       gap: 20px;
       justify-content: center;
       flex-wrap: wrap;
-      font-size: 0.88rem;
-      opacity: 0.8;
+      font-size: 1.05rem;
+      font-weight: 500;
+      opacity: 0.9;
     }
-    .event-meta-row span { display: flex; align-items: center; gap: 5px; }
+    .event-meta-row span { display: flex; align-items: center; gap: 6px; }
 
     .event-body {
       max-width: 680px;
@@ -271,8 +272,18 @@
               <input type="tel" id="reg-phone" placeholder="bijv. 06 12345678" required>
             </div>
             <div class="form-group">
-              <label>Adres <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
-              <input type="text" id="reg-address" placeholder="Straat, huisnummer, woonplaats">
+              <label>Straat en huisnummer <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
+              <input type="text" id="reg-street" placeholder="bijv. Kerkstraat 12">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+              <div class="form-group">
+                <label>Postcode <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
+                <input type="text" id="reg-zip" placeholder="bijv. 7521 AB">
+              </div>
+              <div class="form-group">
+                <label>Woonplaats <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
+                <input type="text" id="reg-city" placeholder="bijv. Enschede">
+              </div>
             </div>
             <div id="form-error" style="display:none;font-size:0.83rem;color:var(--danger);margin-bottom:8px"></div>
             <button class="btn btn-theme" type="submit" id="submit-btn">Aanmelden →</button>
@@ -307,7 +318,9 @@
       const name = document.getElementById('reg-name').value.trim();
       const email = document.getElementById('reg-email').value.trim();
       const phone = document.getElementById('reg-phone').value.trim();
-      const address = document.getElementById('reg-address').value.trim();
+      const street = document.getElementById('reg-street').value.trim();
+      const zip = document.getElementById('reg-zip').value.trim();
+      const city = document.getElementById('reg-city').value.trim();
       const btn = document.getElementById('submit-btn');
       const errEl = document.getElementById('form-error');
 
@@ -334,7 +347,7 @@
         return;
       }
 
-      await registerForEvent(eventId, { name, email, phone, address });
+      await registerForEvent(eventId, { name, email, phone, street, zip, city });
 
       document.getElementById('form-area').innerHTML = `
         <div class="success-block">
