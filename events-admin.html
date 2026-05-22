@@ -385,8 +385,8 @@
       </div>
 
       <div class="wizard-nav">
-        <button class="btn btn-outline" id="wizard-back" onclick="wizardBack()">← Terug</button>
-        <button class="btn btn-primary" id="wizard-next" onclick="wizardNext()">Volgende →</button>
+        <button class="btn btn-outline" id="wizard-back" type="button" onclick="wizardBack()">← Terug</button>
+        <button class="btn btn-primary" id="wizard-next" type="button" onclick="wizardNext()">Volgende →</button>
       </div>
     </div>
   </div>
@@ -541,6 +541,7 @@
       document.getElementById('wizard-back').style.visibility = wizardStep === 1 ? 'hidden' : 'visible';
 
       const nextBtn = document.getElementById('wizard-next');
+      nextBtn.disabled = false;
       if (wizardStep === TOTAL_STEPS) {
         nextBtn.textContent = editingEventId ? 'Opslaan ✓' : 'Aanmaken ✓';
       } else {
@@ -601,32 +602,38 @@
       btn.disabled = true;
       btn.textContent = 'Bezig...';
 
-      const maxVal = document.getElementById('w-max').value;
-      const isPaid = document.getElementById('w-paid').checked;
-      const priceRaw = isPaid ? document.getElementById('w-price').value.trim().replace(',', '.') : '';
-      const includesVal = isPaid ? document.getElementById('w-includes').value.trim() : '';
-      const data = {
-        theme: selectedTheme,
-        title: document.getElementById('w-title').value.trim(),
-        description: document.getElementById('w-desc').value.trim(),
-        date: document.getElementById('w-date').value,
-        time: document.getElementById('w-time').value,
-        duration: document.getElementById('w-duration').value.trim(),
-        location: document.getElementById('w-location').value.trim(),
-        price: priceRaw ? parseFloat(priceRaw) : null,
-        includes: includesVal || null,
-        maxAttendees: maxVal ? parseInt(maxVal) : null,
-        status: document.getElementById('w-status').value,
-      };
+      try {
+        const maxVal = document.getElementById('w-max').value;
+        const isPaid = document.getElementById('w-paid').checked;
+        const priceRaw = isPaid ? document.getElementById('w-price').value.trim().replace(',', '.') : '';
+        const includesVal = isPaid ? document.getElementById('w-includes').value.trim() : '';
+        const data = {
+          theme: selectedTheme,
+          title: document.getElementById('w-title').value.trim(),
+          description: document.getElementById('w-desc').value.trim(),
+          date: document.getElementById('w-date').value,
+          time: document.getElementById('w-time').value,
+          duration: document.getElementById('w-duration').value.trim(),
+          location: document.getElementById('w-location').value.trim(),
+          price: priceRaw ? parseFloat(priceRaw) : null,
+          includes: includesVal || null,
+          maxAttendees: maxVal ? parseInt(maxVal) : null,
+          status: document.getElementById('w-status').value,
+        };
 
-      if (editingEventId) {
-        await updateEvent(editingEventId, data);
-      } else {
-        await createEvent(data);
+        if (editingEventId) {
+          await updateEvent(editingEventId, data);
+        } else {
+          await createEvent(data);
+        }
+
+        closeWizard();
+        renderEvents();
+      } catch (err) {
+        alert('Opslaan mislukt: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = editingEventId ? 'Opslaan ✓' : 'Aanmaken ✓';
       }
-
-      closeWizard();
-      renderEvents();
     }
 
     // ─── REGISTRATIONS ───
