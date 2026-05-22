@@ -454,6 +454,13 @@
       const events = await getEvents();
       const active = events.filter(e => e.status !== 'archived').sort((a, b) => new Date(a.date) - new Date(b.date));
 
+      // load registration counts for all events in parallel
+      const regCounts = {};
+      await Promise.all(active.map(async ev => {
+        const regs = await getRegistrations(ev.id);
+        regCounts[ev.id] = regs.length;
+      }));
+
       main.innerHTML = `
         <div class="admin-section-title">Events</div>
         <div style="margin-bottom:20px">
@@ -464,19 +471,28 @@
             ? '<div class="empty-state"><span class="big-emoji">📅</span><p>Nog geen events aangemaakt.</p></div>'
             : active.map(ev => {
                 const theme = THEMES[ev.theme] || THEMES.flow;
+                const count = regCounts[ev.id] || 0;
+                const max = ev.maxAttendees;
+                const countLabel = max ? `${count} / ${max}` : `${count}`;
+                const countColor = max && count >= max ? 'var(--danger)' : count > 0 ? 'var(--success)' : 'var(--text-light)';
                 return `
-                  <div class="event-row">
-                    <div class="event-row-theme" style="background:${theme.accent}"></div>
-                    <div class="event-row-info">
-                      <div class="event-row-title">${ev.title}</div>
-                      <div class="event-row-meta">${theme.emoji} ${theme.label} · ${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}${ev.duration ? ' · ⏱ ' + ev.duration : ''}</div>
+                  <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:var(--white);box-shadow:var(--shadow-sm)">
+                    <div class="event-row" style="border:none;border-radius:0;box-shadow:none">
+                      <div class="event-row-theme" style="background:${theme.accent}"></div>
+                      <div class="event-row-info">
+                        <div class="event-row-title">${ev.title}</div>
+                        <div class="event-row-meta">${theme.emoji} ${theme.label} · ${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}${ev.duration ? ' · ⏱ ' + ev.duration : ''}</div>
+                      </div>
+                      <span style="font-size:0.8rem;font-weight:700;color:${countColor};white-space:nowrap">👥 ${countLabel}</span>
+                      <span class="status-pill ${ev.status}">${ev.status === 'published' ? 'Gepubliceerd' : 'Concept'}</span>
+                      <button class="btn-icon" onclick="editEvent('${ev.id}')" title="Bewerken">✏️</button>
+                      <button class="btn-icon" onclick="viewRegistrations('${ev.id}')" title="Aanmeldingen">👥</button>
+                      <a class="btn-icon" href="event.html?id=${ev.id}" target="_blank" title="Bekijk eventpagina">🔗</a>
+                      <button class="btn-icon" onclick="archiveEvent('${ev.id}')" title="Archiveren">🗄️</button>
+                      <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Verwijderen">🗑️</button>
+                      <button class="btn-icon" onclick="toggleRegPreview('${ev.id}')" title="Aanmeldingen tonen" id="toggle-btn-${ev.id}">▼</button>
                     </div>
-                    <span class="status-pill ${ev.status}">${ev.status === 'published' ? 'Gepubliceerd' : 'Concept'}</span>
-                    <button class="btn-icon" onclick="editEvent('${ev.id}')" title="Bewerken">✏️</button>
-                    <button class="btn-icon" onclick="viewRegistrations('${ev.id}')" title="Aanmeldingen">👥</button>
-                    <a class="btn-icon" href="event.html?id=${ev.id}" target="_blank" title="Bekijk eventpagina">🔗</a>
-                    <button class="btn-icon" onclick="archiveEvent('${ev.id}')" title="Archiveren">🗄️</button>
-                    <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Verwijderen">🗑️</button>
+                    <div id="reg-preview-${ev.id}" style="display:none;border-top:1px solid var(--border);padding:0 16px 14px;background:var(--bg-soft)"></div>
                   </div>`;
               }).join('')
           }
@@ -665,6 +681,40 @@
         btn.disabled = false;
         btn.textContent = editingEventId ? 'Opslaan ✓' : 'Aanmaken ✓';
       }
+    }
+
+    async function toggleRegPreview(eventId) {
+      const panel = document.getElementById(`reg-preview-${eventId}`);
+      const btn = document.getElementById(`toggle-btn-${eventId}`);
+      const isOpen = panel.style.display !== 'none';
+
+      if (isOpen) {
+        panel.style.display = 'none';
+        btn.textContent = '▼';
+        return;
+      }
+
+      btn.textContent = '▲';
+      panel.style.display = 'block';
+      panel.innerHTML = `<p style="font-size:0.82rem;color:var(--text-light);padding:12px 0">Laden...</p>`;
+
+      const regs = await getRegistrations(eventId);
+      if (regs.length === 0) {
+        panel.innerHTML = `<p style="font-size:0.82rem;color:var(--text-light);padding:12px 0">Nog geen aanmeldingen.</p>`;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;padding-top:12px">
+          ${regs.map((r, i) => `
+            <div style="display:flex;align-items:center;gap:10px;font-size:0.82rem;padding:6px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-light);width:20px;flex-shrink:0">${i + 1}</span>
+              <span style="width:28px;height:28px;border-radius:50%;background:var(--accent-light);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.72rem;flex-shrink:0">${r.name.charAt(0).toUpperCase()}</span>
+              <span style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</span>
+              <span style="color:var(--text-light);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.email}</span>
+              <span style="color:var(--text-light);white-space:nowrap">${r.phone || '—'}</span>
+            </div>`).join('')}
+        </div>`;
     }
 
     // ─── REGISTRATIONS ───
