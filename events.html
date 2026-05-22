@@ -190,6 +190,7 @@
               <div class="event-card-meta">
                 <span>📅 ${formatDate(ev.date)}</span>
                 ${ev.time ? `<span>🕐 ${ev.time}</span>` : ''}
+                ${ev.duration ? `<span>⏱ ${ev.duration}</span>` : ''}
                 ${ev.location ? `<span>📍 ${ev.location}</span>` : ''}
               </div>
             </div>

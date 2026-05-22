@@ -230,6 +230,7 @@
     <nav class="admin-sidebar">
       <button class="admin-nav-item active" data-section="events">📅 Events</button>
       <button class="admin-nav-item" data-section="registrations">👥 Aanmeldingen</button>
+      <button class="admin-nav-item" data-section="archive">🗄️ Archief</button>
     </nav>
 
     <main class="admin-content" id="admin-main"></main>
@@ -313,6 +314,10 @@
           </div>
         </div>
         <div class="form-group">
+          <label>Duur <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
+          <input type="text" id="w-duration" placeholder="bijv. 2 uur, 90 minuten">
+        </div>
+        <div class="form-group">
           <label>Locatie</label>
           <input type="text" id="w-location" placeholder="bijv. Flow Coffeebar, Enschede">
         </div>
@@ -358,6 +363,7 @@
         currentSection = item.dataset.section;
         if (currentSection === 'events') renderEvents();
         if (currentSection === 'registrations') renderRegistrationsOverview();
+        if (currentSection === 'archive') renderArchive();
       });
     });
 
@@ -384,12 +390,13 @@
                     <div class="event-row-theme" style="background:${theme.accent}"></div>
                     <div class="event-row-info">
                       <div class="event-row-title">${ev.title}</div>
-                      <div class="event-row-meta">${theme.emoji} ${theme.label} · ${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}</div>
+                      <div class="event-row-meta">${theme.emoji} ${theme.label} · ${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}${ev.duration ? ' · ⏱ ' + ev.duration : ''}</div>
                     </div>
                     <span class="status-pill ${ev.status}">${ev.status === 'published' ? 'Gepubliceerd' : 'Concept'}</span>
                     <button class="btn-icon" onclick="editEvent('${ev.id}')" title="Bewerken">✏️</button>
                     <button class="btn-icon" onclick="viewRegistrations('${ev.id}')" title="Aanmeldingen">👥</button>
                     <a class="btn-icon" href="event.html?id=${ev.id}" target="_blank" title="Bekijk eventpagina">🔗</a>
+                    <button class="btn-icon" onclick="archiveEvent('${ev.id}')" title="Archiveren">🗄️</button>
                     <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Verwijderen">🗑️</button>
                   </div>`;
               }).join('')
@@ -423,6 +430,7 @@
         document.getElementById('w-desc').value = existing.description || '';
         document.getElementById('w-date').value = existing.date || '';
         document.getElementById('w-time').value = existing.time || '';
+        document.getElementById('w-duration').value = existing.duration || '';
         document.getElementById('w-location').value = existing.location || '';
         document.getElementById('w-max').value = existing.maxAttendees || '';
         document.getElementById('w-status').value = existing.status || 'draft';
@@ -431,6 +439,7 @@
         document.getElementById('w-desc').value = '';
         document.getElementById('w-date').value = '';
         document.getElementById('w-time').value = '';
+        document.getElementById('w-duration').value = '';
         document.getElementById('w-location').value = 'Flow Coffeebar, Rijssen';
       }
 
@@ -490,12 +499,13 @@
       const title = document.getElementById('w-title').value || '—';
       const date = document.getElementById('w-date').value;
       const time = document.getElementById('w-time').value;
+      const duration = document.getElementById('w-duration').value;
       const location = document.getElementById('w-location').value;
       const max = document.getElementById('w-max').value;
 
       document.getElementById('wizard-preview').innerHTML = `
         <strong>${theme.emoji} ${theme.label}</strong> — ${title}<br>
-        ${date ? '📅 ' + formatDate(date) : ''} ${time ? '· 🕐 ' + time : ''}<br>
+        ${date ? '📅 ' + formatDate(date) : ''} ${time ? '· 🕐 ' + time : ''} ${duration ? '· ⏱ ' + duration : ''}<br>
         ${location ? '📍 ' + location + '<br>' : ''}
         ${max ? '👥 Max. ' + max + ' deelnemers' : '👥 Onbeperkt'}
       `;
@@ -539,6 +549,7 @@
         description: document.getElementById('w-desc').value.trim(),
         date: document.getElementById('w-date').value,
         time: document.getElementById('w-time').value,
+        duration: document.getElementById('w-duration').value.trim(),
         location: document.getElementById('w-location').value.trim(),
         maxAttendees: maxVal ? parseInt(maxVal) : null,
         status: document.getElementById('w-status').value,
@@ -630,6 +641,7 @@
         <div style="font-size:0.9rem;color:var(--text-mid);margin-bottom:24px;display:flex;gap:16px;flex-wrap:wrap">
           <span>📅 ${formatDate(ev.date)}</span>
           ${ev.time ? `<span>🕐 ${ev.time}</span>` : ''}
+          ${ev.duration ? `<span>⏱ ${ev.duration}</span>` : ''}
           ${ev.location ? `<span>📍 ${ev.location}</span>` : ''}
         </div>
 
@@ -730,7 +742,7 @@
         </style>
       </head><body>
         <h1>${ev.title} <span class="pill">${theme.emoji} ${theme.label}</span></h1>
-        <div class="meta">${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''} · ${regs.length} aanmeldingen</div>
+        <div class="meta">${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}${ev.duration ? ' · ⏱ ' + ev.duration : ''} · ${regs.length} aanmeldingen</div>
         <table>
           <thead><tr><th>#</th><th>Naam</th><th>E-mail</th><th>Telefoon</th><th>Straat</th><th>Postcode</th><th>Woonplaats</th><th>Aangemeld op</th></tr></thead>
           <tbody>${rows || '<tr><td colspan="8" style="color:#aaa;padding:20px">Geen aanmeldingen</td></tr>'}</tbody>
@@ -792,6 +804,75 @@
       btn.disabled = false;
       btn.textContent = 'Opslaan';
       renderRegistrationsForEvent(eventId);
+    }
+
+    async function archiveEvent(id) {
+      if (!confirm('Dit event archiveren? Het wordt niet meer getoond in de events lijst.')) return;
+      await updateEvent(id, { status: 'archived' });
+      renderEvents();
+    }
+
+    async function renderArchive() {
+      const main = document.getElementById('admin-main');
+      main.innerHTML = `<div class="admin-section-title">Archief</div><p style="color:var(--text-light)">Laden...</p>`;
+
+      const events = await getEvents();
+      const archived = events
+        .filter(e => e.status === 'archived')
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      main.innerHTML = `
+        <div class="admin-section-title">Archief</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${archived.length === 0
+            ? '<div class="empty-state"><span class="big-emoji">🗄️</span><p>Geen gearchiveerde events.</p></div>'
+            : archived.map(ev => {
+                const theme = THEMES[ev.theme] || THEMES.flow;
+                return `
+                  <div class="event-row">
+                    <div class="event-row-theme" style="background:${theme.accent}"></div>
+                    <div class="event-row-info">
+                      <div class="event-row-title">${ev.title}</div>
+                      <div class="event-row-meta">${theme.emoji} ${theme.label} · ${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}${ev.duration ? ' · ⏱ ' + ev.duration : ''}</div>
+                    </div>
+                    <span class="status-pill draft">Gearchiveerd</span>
+                    <button class="btn-icon" onclick="duplicateEvent('${ev.id}')" title="Dupliceren als nieuw event">📋</button>
+                    <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Definitief verwijderen">🗑️</button>
+                  </div>`;
+              }).join('')
+          }
+        </div>`;
+    }
+
+    async function duplicateEvent(id) {
+      const ev = await getEvent(id);
+      if (!ev) return;
+      const copy = {
+        theme: ev.theme,
+        title: ev.title,
+        description: ev.description || '',
+        date: '',
+        time: ev.time || '',
+        duration: ev.duration || '',
+        location: ev.location || 'Flow Coffeebar, Rijssen',
+        maxAttendees: ev.maxAttendees || null,
+        status: 'draft',
+      };
+      editingEventId = null;
+      selectedTheme = copy.theme;
+      wizardStep = 1;
+      document.getElementById('wizard-title').textContent = 'Event dupliceren';
+      document.getElementById('w-title').value = copy.title;
+      document.getElementById('w-desc').value = copy.description;
+      document.getElementById('w-date').value = copy.date;
+      document.getElementById('w-time').value = copy.time;
+      document.getElementById('w-duration').value = copy.duration;
+      document.getElementById('w-location').value = copy.location;
+      document.getElementById('w-max').value = copy.maxAttendees || '';
+      document.getElementById('w-status').value = 'draft';
+      renderThemeGrid();
+      updateWizardStep();
+      document.getElementById('wizard-overlay').classList.add('open');
     }
 
     // ─── INIT ───
