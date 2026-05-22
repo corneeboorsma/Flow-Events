@@ -70,15 +70,20 @@
     .event-meta-row span { display: flex; align-items: center; gap: 6px; }
 
     .event-body {
-      max-width: 680px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 40px;
+      align-items: start;
     }
+
+    .event-body-left { min-width: 0; }
 
     .event-description {
       font-size: 1rem;
       line-height: 1.8;
-      margin-bottom: 36px;
       opacity: 0.85;
     }
 
@@ -191,7 +196,7 @@
       .event-hero { padding: 36px 16px 32px; }
       .event-title { font-size: 1.6rem; }
       .event-meta-row { font-size: 0.9rem; gap: 12px; }
-      .event-body { padding: 24px 16px 60px; }
+      .event-body { padding: 24px 16px 60px; grid-template-columns: 1fr; gap: 24px; }
       .register-card { padding: 24px 16px; }
       .zip-city-grid { grid-template-columns: 1fr !important; }
     }
@@ -321,8 +326,10 @@
           </div>
         </div>
         <div class="event-body">
-          <a class="back-link" href="events.html">← Alle evenementen</a>
-          ${ev.description ? `<div class="event-description">${ev.description}</div>` : ''}
+          <div class="event-body-left">
+            <a class="back-link" href="events.html">← Alle evenementen</a>
+            ${ev.description ? `<div class="event-description">${ev.description}</div>` : ''}
+          </div>
           <div class="register-card">
             <div class="register-title">Aanmelden</div>
             <div class="register-sub">Reserveer jouw plek voor dit evenement.</div>
