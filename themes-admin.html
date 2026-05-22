@@ -307,19 +307,19 @@
       const def = THEMES_DEFAULT[key];
       const custom = isCustom(key);
       const isModified = !custom && JSON.stringify(t) !== JSON.stringify(def);
+      const sk = key.replace(/[^a-zA-Z0-9_-]/g, '_');
 
       const fieldsHtml = FIELDS.map(f => {
         const val = (t[f.key] || '').toString();
         const isColor = f.type === 'color';
         const fullWidth = f.full ? 'grid-column: 1 / -1' : '';
-        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
 
         const input = isColor
           ? `<div class="theme-field-color">
-               <input type="color" value="${/^#[0-9a-f]{6}$/i.test(val) ? val : '#cccccc'}" oninput="syncColor('${safeKey}','${f.key}',this,'text')" onchange="updatePreview('${safeKey}')">
-               <input type="text" value="${val.replace(/"/g, '&quot;')}" id="tf-${safeKey}-${f.key}" oninput="syncColor('${safeKey}','${f.key}',this,'color')" onchange="updatePreview('${safeKey}')">
+               <input type="color" value="${/^#[0-9a-f]{6}$/i.test(val) ? val : '#cccccc'}" oninput="syncColor('${sk}','${f.key}',this,'text')" onchange="updatePreview('${sk}')">
+               <input type="text" value="${val.replace(/"/g, '&quot;')}" id="tf-${sk}-${f.key}" oninput="syncColor('${sk}','${f.key}',this,'color')" onchange="updatePreview('${sk}')">
              </div>`
-          : `<input type="${f.type}" value="${val.replace(/"/g, '&quot;')}" id="tf-${safeKey}-${f.key}" oninput="updatePreview('${safeKey}')">`;
+          : `<input type="${f.type}" value="${val.replace(/"/g, '&quot;')}" id="tf-${sk}-${f.key}" oninput="updatePreview('${sk}')">`;
 
         return `
           <div class="theme-field" style="${fullWidth}">
@@ -329,17 +329,15 @@
           </div>`;
       }).join('');
 
-      const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-
       return `
-        <div class="theme-editor" id="editor-${safeKey}">
-          <div class="theme-editor-header" onclick="toggleEditor('${safeKey}')">
+        <div class="theme-editor" id="editor-${sk}">
+          <div class="theme-editor-header" onclick="toggleEditor('${sk}')">
             <div class="theme-editor-header-left">
-              <div class="theme-swatch" id="swatch-${safeKey}" style="background:${t.accent}"></div>
+              <div class="theme-swatch" id="swatch-${sk}" style="background:${t.accent}"></div>
               <span class="theme-editor-emoji">${t.emoji}</span>
               <span class="theme-editor-name">${t.label}</span>
               ${custom ? `<span class="theme-modified-badge visible" style="background:#e8f5ec;color:var(--success)">Aangepast</span>` : ''}
-              ${isModified ? `<span class="theme-modified-badge visible" id="badge-${safeKey}">Aangepast</span>` : `<span class="theme-modified-badge" id="badge-${safeKey}">Aangepast</span>`}
+              <span class="theme-modified-badge ${isModified ? 'visible' : ''}" id="badge-${sk}">Aangepast</span>
             </div>
             <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
               <button class="btn-icon" onclick="duplicateTheme('${key}')" title="Dupliceren">📋</button>
@@ -349,10 +347,10 @@
           </div>
           <div class="theme-editor-body">
             <div class="theme-fields">${fieldsHtml}</div>
-            <div class="theme-preview-bar" id="preview-${safeKey}"></div>
+            <div class="theme-preview-bar" id="preview-${sk}"></div>
             <div class="theme-actions">
-              <button class="btn btn-primary btn-sm" onclick="saveThemeEditor('${key}','${safeKey}')">💾 Opslaan</button>
-              ${!custom ? `<button class="btn btn-outline btn-sm" onclick="resetThemeEditor('${key}','${safeKey}')">↺ Terugzetten naar standaard</button>` : ''}
+              <button class="btn btn-primary btn-sm" onclick="saveThemeEditor('${key}','${sk}')">💾 Opslaan</button>
+              ${!custom ? `<button class="btn btn-outline btn-sm" onclick="resetThemeEditor('${key}','${sk}')">↺ Terugzetten naar standaard</button>` : ''}
             </div>
           </div>
         </div>`;
