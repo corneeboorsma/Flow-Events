@@ -204,7 +204,7 @@
   <script>
     async function init() {
       await loadThemes();
-      const grid = document.getElementById('events-list');
+      const list = document.getElementById('events-list');
       const events = await getEvents();
       const published = events
         .filter(e => e.status === 'published')
