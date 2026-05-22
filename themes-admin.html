@@ -250,6 +250,30 @@
 
   <footer class="footer">Flow Coffeebar &nbsp;|&nbsp; Grotestraat 38 &nbsp;|&nbsp; 7461 KG &nbsp;|&nbsp; Rijssen</footer>
 
+  <!-- ─── NIEUW/DUPLICEER MODAL ─── -->
+  <div class="wizard-overlay" id="theme-modal">
+    <div class="wizard" style="max-width:440px">
+      <div class="wizard-header">
+        <h2 class="wizard-title" id="theme-modal-title">Nieuw thema</h2>
+        <button class="modal-close" onclick="closeThemeModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Naam</label>
+        <input type="text" id="tm-name" placeholder="bijv. Warm" style="width:100%">
+      </div>
+      <div class="form-group" id="tm-template-group">
+        <label>Basis op thema</label>
+        <select id="tm-template" style="width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.92rem;background:var(--bg-soft);outline:none">
+        </select>
+      </div>
+      <div id="tm-error" style="display:none;font-size:0.83rem;color:var(--danger);margin-bottom:8px"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline" type="button" onclick="closeThemeModal()">Annuleren</button>
+        <button class="btn btn-primary" type="button" onclick="confirmThemeModal()">Aanmaken →</button>
+      </div>
+    </div>
+  </div>
+
   <script src="events.js"></script>
   <script>
     const FIELDS = [
@@ -404,53 +428,88 @@
       showToast(`↺ ${THEMES_DEFAULT[key].label} teruggezet`);
     }
 
-    async function newTheme() {
-      const name = prompt('Naam voor het nieuwe thema (bijv. "warm"):');
-      if (!name) return;
-      const key = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      if (!key) return;
-      if (THEMES[key]) { alert(`Thema "${key}" bestaat al.`); return; }
+    // ─── NIEUW/DUPLICEER MODAL ───
+    let themeModalMode = 'new'; // 'new' or 'duplicate'
+    let themeModalSourceKey = null;
 
-      const newT = {
-        label: name.trim(),
-        emoji: '✨',
-        bg: '#fdfaf2',
-        accent: '#c9973a',
-        text: '#261d08',
-        hero: 'linear-gradient(135deg, #fdf8e1 0%, #f7edbc 100%)',
-        card: '#ffffff',
-        img: 'https://images.unsplash.com/photo-1524117074681-31bd4de22ad3?w=800&q=80',
-        _custom: true,
-      };
-      THEMES[key] = newT;
-      await saveTheme(key, newT);
+    function openThemeModal(mode, sourceKey) {
+      themeModalMode = mode;
+      themeModalSourceKey = sourceKey || null;
+
+      document.getElementById('theme-modal-title').textContent =
+        mode === 'duplicate' ? `Dupliceer "${THEMES[sourceKey].label}"` : 'Nieuw thema';
+      document.getElementById('tm-name').value =
+        mode === 'duplicate' ? `${THEMES[sourceKey].label} (kopie)` : '';
+      document.getElementById('tm-error').style.display = 'none';
+
+      // vul template-dropdown — bij dupliceren is template verborgen (bron is al bekend)
+      const templateGroup = document.getElementById('tm-template-group');
+      const select = document.getElementById('tm-template');
+      if (mode === 'duplicate') {
+        templateGroup.style.display = 'none';
+      } else {
+        templateGroup.style.display = 'block';
+        select.innerHTML = Object.keys(THEMES).map(k =>
+          `<option value="${k}">${THEMES[k].emoji} ${THEMES[k].label}</option>`
+        ).join('');
+      }
+
+      document.getElementById('theme-modal').classList.add('open');
+      setTimeout(() => document.getElementById('tm-name').focus(), 100);
+    }
+
+    function closeThemeModal() {
+      document.getElementById('theme-modal').classList.remove('open');
+    }
+
+    async function confirmThemeModal() {
+      const nameEl = document.getElementById('tm-name');
+      const errEl = document.getElementById('tm-error');
+      const name = nameEl.value.trim();
+
+      if (!name) {
+        errEl.textContent = 'Vul een naam in.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const key = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      if (!key) {
+        errEl.textContent = 'Naam bevat geen geldige tekens.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (THEMES[key]) {
+        errEl.textContent = `Thema "${key}" bestaat al. Kies een andere naam.`;
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const sourceKey = themeModalMode === 'duplicate'
+        ? themeModalSourceKey
+        : document.getElementById('tm-template').value;
+
+      const copy = { ...THEMES[sourceKey], label: name, _custom: true };
+      THEMES[key] = copy;
+      await saveTheme(key, copy);
+
+      closeThemeModal();
 
       const container = document.getElementById('themes-container');
       container.insertAdjacentHTML('beforeend', buildEditor(key));
       const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
       document.getElementById(`editor-${safeKey}`).classList.add('open');
       updatePreview(safeKey);
-      showToast(`✨ Nieuw thema "${newT.label}" aangemaakt`);
+      document.getElementById(`editor-${safeKey}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showToast(`${copy.emoji} "${copy.label}" aangemaakt`);
+    }
+
+    function newTheme() {
+      openThemeModal('new', null);
     }
 
     async function duplicateTheme(key) {
-      const src = THEMES[key];
-      const newName = prompt(`Naam voor het duplicaat van "${src.label}":`);
-      if (!newName) return;
-      const newKey = newName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      if (!newKey) return;
-      if (THEMES[newKey]) { alert(`Thema "${newKey}" bestaat al.`); return; }
-
-      const copy = { ...src, label: newName.trim(), _custom: true };
-      THEMES[newKey] = copy;
-      await saveTheme(newKey, copy);
-
-      const container = document.getElementById('themes-container');
-      container.insertAdjacentHTML('beforeend', buildEditor(newKey));
-      const safeKey = newKey.replace(/[^a-zA-Z0-9_-]/g, '_');
-      document.getElementById(`editor-${safeKey}`).classList.add('open');
-      updatePreview(safeKey);
-      showToast(`📋 "${copy.label}" aangemaakt`);
+      openThemeModal('duplicate', key);
     }
 
     async function removeTheme(key) {
