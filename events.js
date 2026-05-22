@@ -49,8 +49,15 @@ let THEMES = { ...THEMES_DEFAULT };
 async function loadThemes() {
   const data = await fbGet('themes');
   if (data) {
+    // update existing defaults
     Object.keys(THEMES_DEFAULT).forEach(key => {
       if (data[key]) THEMES[key] = { ...THEMES_DEFAULT[key], ...data[key] };
+    });
+    // load custom themes (not in defaults)
+    Object.keys(data).forEach(key => {
+      if (!THEMES_DEFAULT[key] && data[key] && data[key]._custom) {
+        THEMES[key] = data[key];
+      }
     });
   }
   return THEMES;
@@ -58,6 +65,10 @@ async function loadThemes() {
 
 async function saveTheme(key, data) {
   return fbSet(`themes/${key}`, data);
+}
+
+async function deleteTheme(key) {
+  return fbDelete(`themes/${key}`);
 }
 
 async function resetTheme(key) {

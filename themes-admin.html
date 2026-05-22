@@ -241,7 +241,7 @@
   <div class="page-wrap">
     <div class="page-header">
       <h1 class="page-title">Thema's beheren</h1>
-      <p style="font-size:0.85rem;color:var(--text-light)">Wijzigingen worden direct opgeslagen in Firebase.</p>
+      <button class="btn btn-primary btn-sm" onclick="newTheme()">+ Nieuw thema</button>
     </div>
     <div id="themes-container">
       <p style="color:var(--text-light)">Laden...</p>
@@ -270,25 +270,32 @@
 
     function renderThemes() {
       const container = document.getElementById('themes-container');
-      container.innerHTML = Object.keys(THEMES_DEFAULT).map(key => buildEditor(key)).join('');
+      const allKeys = Object.keys(THEMES);
+      container.innerHTML = allKeys.map(key => buildEditor(key)).join('');
+    }
+
+    function isCustom(key) {
+      return !THEMES_DEFAULT[key];
     }
 
     function buildEditor(key) {
       const t = THEMES[key];
       const def = THEMES_DEFAULT[key];
-      const isModified = JSON.stringify(t) !== JSON.stringify(def);
+      const custom = isCustom(key);
+      const isModified = !custom && JSON.stringify(t) !== JSON.stringify(def);
 
       const fieldsHtml = FIELDS.map(f => {
-        const val = t[f.key] || '';
+        const val = (t[f.key] || '').toString();
         const isColor = f.type === 'color';
         const fullWidth = f.full ? 'grid-column: 1 / -1' : '';
+        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
 
         const input = isColor
           ? `<div class="theme-field-color">
-               <input type="color" value="${val}" oninput="syncColor('${key}','${f.key}',this,'text')" onchange="updatePreview('${key}')">
-               <input type="text" value="${val}" id="tf-${key}-${f.key}" oninput="syncColor('${key}','${f.key}',this,'color')" onchange="updatePreview('${key}')">
+               <input type="color" value="${/^#[0-9a-f]{6}$/i.test(val) ? val : '#cccccc'}" oninput="syncColor('${safeKey}','${f.key}',this,'text')" onchange="updatePreview('${safeKey}')">
+               <input type="text" value="${val.replace(/"/g, '&quot;')}" id="tf-${safeKey}-${f.key}" oninput="syncColor('${safeKey}','${f.key}',this,'color')" onchange="updatePreview('${safeKey}')">
              </div>`
-          : `<input type="${f.type}" value="${val.replace(/"/g, '&quot;')}" id="tf-${key}-${f.key}" oninput="updatePreview('${key}')">`;
+          : `<input type="${f.type}" value="${val.replace(/"/g, '&quot;')}" id="tf-${safeKey}-${f.key}" oninput="updatePreview('${safeKey}')">`;
 
         return `
           <div class="theme-field" style="${fullWidth}">
@@ -298,59 +305,66 @@
           </div>`;
       }).join('');
 
+      const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+
       return `
-        <div class="theme-editor" id="editor-${key}">
-          <div class="theme-editor-header" onclick="toggleEditor('${key}')">
+        <div class="theme-editor" id="editor-${safeKey}">
+          <div class="theme-editor-header" onclick="toggleEditor('${safeKey}')">
             <div class="theme-editor-header-left">
-              <div class="theme-swatch" id="swatch-${key}" style="background:${t.accent}"></div>
+              <div class="theme-swatch" id="swatch-${safeKey}" style="background:${t.accent}"></div>
               <span class="theme-editor-emoji">${t.emoji}</span>
               <span class="theme-editor-name">${t.label}</span>
-              <span class="theme-modified-badge ${isModified ? 'visible' : ''}" id="badge-${key}">Aangepast</span>
+              ${custom ? `<span class="theme-modified-badge visible" style="background:#e8f5ec;color:var(--success)">Aangepast</span>` : ''}
+              ${isModified ? `<span class="theme-modified-badge visible" id="badge-${safeKey}">Aangepast</span>` : `<span class="theme-modified-badge" id="badge-${safeKey}">Aangepast</span>`}
             </div>
-            <span class="theme-chevron">▼</span>
+            <div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">
+              <button class="btn-icon" onclick="duplicateTheme('${key}')" title="Dupliceren">📋</button>
+              ${custom ? `<button class="btn-icon danger" onclick="removeTheme('${key}')" title="Verwijderen">🗑️</button>` : ''}
+              <span class="theme-chevron">▼</span>
+            </div>
           </div>
           <div class="theme-editor-body">
             <div class="theme-fields">${fieldsHtml}</div>
-            <div class="theme-preview-bar" id="preview-${key}"></div>
+            <div class="theme-preview-bar" id="preview-${safeKey}"></div>
             <div class="theme-actions">
-              <button class="btn btn-primary btn-sm" onclick="saveThemeEditor('${key}')">💾 Opslaan</button>
-              <button class="btn btn-outline btn-sm" onclick="resetThemeEditor('${key}')">↺ Terugzetten naar standaard</button>
+              <button class="btn btn-primary btn-sm" onclick="saveThemeEditor('${key}','${safeKey}')">💾 Opslaan</button>
+              ${!custom ? `<button class="btn btn-outline btn-sm" onclick="resetThemeEditor('${key}','${safeKey}')">↺ Terugzetten naar standaard</button>` : ''}
             </div>
           </div>
         </div>`;
     }
 
-    function toggleEditor(key) {
-      const el = document.getElementById(`editor-${key}`);
+    function toggleEditor(safeKey) {
+      const el = document.getElementById(`editor-${safeKey}`);
       const isOpen = el.classList.toggle('open');
-      if (isOpen) updatePreview(key);
+      if (isOpen) updatePreview(safeKey);
     }
 
-    function syncColor(key, field, source, target) {
+    function syncColor(safeKey, field, source, target) {
       const val = source.value;
       if (target === 'text') {
-        document.getElementById(`tf-${key}-${field}`).value = val;
+        document.getElementById(`tf-${safeKey}-${field}`).value = val;
       } else {
-        // sync color picker
         const colorInput = source.closest('.theme-field-color').querySelector('input[type="color"]');
         if (colorInput && /^#[0-9a-f]{6}$/i.test(val)) colorInput.value = val;
       }
     }
 
-    function getEditorValues(key) {
+    function getEditorValues(safeKey) {
       const t = {};
       FIELDS.forEach(f => {
-        const el = document.getElementById(`tf-${key}-${f.key}`);
+        const el = document.getElementById(`tf-${safeKey}-${f.key}`);
         if (el) t[f.key] = el.value.trim();
       });
       return t;
     }
 
-    function updatePreview(key) {
-      const t = getEditorValues(key);
-      const previewEl = document.getElementById(`preview-${key}`);
-      const swatchEl = document.getElementById(`swatch-${key}`);
+    function updatePreview(safeKey) {
+      const t = getEditorValues(safeKey);
+      const previewEl = document.getElementById(`preview-${safeKey}`);
+      const swatchEl = document.getElementById(`swatch-${safeKey}`);
       if (swatchEl) swatchEl.style.background = t.accent;
+      if (!previewEl) return;
 
       previewEl.innerHTML = `
         <div class="theme-preview-hero" style="background:${t.hero}">
@@ -364,37 +378,89 @@
         </div>`;
     }
 
-    async function saveThemeEditor(key) {
-      const data = getEditorValues(key);
-      THEMES[key] = { ...THEMES_DEFAULT[key], ...data };
+    async function saveThemeEditor(key, safeKey) {
+      const data = getEditorValues(safeKey);
+      if (isCustom(key)) data._custom = true;
+      THEMES[key] = data;
       await saveTheme(key, data);
 
-      const badge = document.getElementById(`badge-${key}`);
+      const badge = document.getElementById(`badge-${safeKey}`);
       if (badge) badge.classList.add('visible');
-
-      // update header emoji/name live
-      const editor = document.getElementById(`editor-${key}`);
-      editor.querySelector('.theme-editor-emoji').textContent = data.emoji;
-      editor.querySelector('.theme-editor-name').textContent = data.label;
+      document.getElementById(`editor-${safeKey}`).querySelector('.theme-editor-emoji').textContent = data.emoji;
+      document.getElementById(`editor-${safeKey}`).querySelector('.theme-editor-name').textContent = data.label;
 
       showToast(`${data.emoji} ${data.label} opgeslagen`);
     }
 
-    async function resetThemeEditor(key) {
+    async function resetThemeEditor(key, safeKey) {
       if (!confirm(`Thema "${THEMES_DEFAULT[key].label}" terugzetten naar standaard?`)) return;
       await resetTheme(key);
       THEMES[key] = { ...THEMES_DEFAULT[key] };
 
-      // rebuild this editor
-      const el = document.getElementById(`editor-${key}`);
+      const el = document.getElementById(`editor-${safeKey}`);
       el.outerHTML = buildEditor(key);
-      // re-open and re-render
-      const newEl = document.getElementById(`editor-${key}`);
-      newEl.classList.add('open');
-      updatePreview(key);
-
-      document.getElementById(`badge-${key}`)?.classList.remove('visible');
+      document.getElementById(`editor-${safeKey}`).classList.add('open');
+      updatePreview(safeKey);
       showToast(`↺ ${THEMES_DEFAULT[key].label} teruggezet`);
+    }
+
+    async function newTheme() {
+      const name = prompt('Naam voor het nieuwe thema (bijv. "warm"):');
+      if (!name) return;
+      const key = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      if (!key) return;
+      if (THEMES[key]) { alert(`Thema "${key}" bestaat al.`); return; }
+
+      const newT = {
+        label: name.trim(),
+        emoji: '✨',
+        bg: '#fdfaf2',
+        accent: '#c9973a',
+        text: '#261d08',
+        hero: 'linear-gradient(135deg, #fdf8e1 0%, #f7edbc 100%)',
+        card: '#ffffff',
+        img: 'https://images.unsplash.com/photo-1524117074681-31bd4de22ad3?w=800&q=80',
+        _custom: true,
+      };
+      THEMES[key] = newT;
+      await saveTheme(key, newT);
+
+      const container = document.getElementById('themes-container');
+      container.insertAdjacentHTML('beforeend', buildEditor(key));
+      const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.getElementById(`editor-${safeKey}`).classList.add('open');
+      updatePreview(safeKey);
+      showToast(`✨ Nieuw thema "${newT.label}" aangemaakt`);
+    }
+
+    async function duplicateTheme(key) {
+      const src = THEMES[key];
+      const newName = prompt(`Naam voor het duplicaat van "${src.label}":`);
+      if (!newName) return;
+      const newKey = newName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      if (!newKey) return;
+      if (THEMES[newKey]) { alert(`Thema "${newKey}" bestaat al.`); return; }
+
+      const copy = { ...src, label: newName.trim(), _custom: true };
+      THEMES[newKey] = copy;
+      await saveTheme(newKey, copy);
+
+      const container = document.getElementById('themes-container');
+      container.insertAdjacentHTML('beforeend', buildEditor(newKey));
+      const safeKey = newKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.getElementById(`editor-${safeKey}`).classList.add('open');
+      updatePreview(safeKey);
+      showToast(`📋 "${copy.label}" aangemaakt`);
+    }
+
+    async function removeTheme(key) {
+      const t = THEMES[key];
+      if (!confirm(`Thema "${t.label}" definitief verwijderen?`)) return;
+      await deleteTheme(key);
+      delete THEMES[key];
+      const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.getElementById(`editor-${safeKey}`)?.remove();
+      showToast(`🗑️ "${t.label}" verwijderd`);
     }
 
     function showToast(msg) {
