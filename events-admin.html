@@ -539,9 +539,11 @@
             : regs.map(r => `
               <div class="reg-row">
                 <div class="reg-avatar">${r.name.charAt(0).toUpperCase()}</div>
-                <div>
+                <div style="flex:1;min-width:0">
                   <div class="reg-name">${r.name}</div>
                   <div class="reg-email">${r.email}</div>
+                  ${r.phone ? `<div class="reg-email">📱 ${r.phone}</div>` : ''}
+                  ${r.address ? `<div class="reg-email">📍 ${r.address}</div>` : ''}
                 </div>
                 <span class="reg-time">${new Date(r.registeredAt).toLocaleDateString('nl-BE', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
               </div>`).join('')

@@ -266,6 +266,14 @@
               <label>E-mail</label>
               <input type="email" id="reg-email" placeholder="jouw@email.be" required>
             </div>
+            <div class="form-group">
+              <label>Telefoonnummer / Mobiel</label>
+              <input type="tel" id="reg-phone" placeholder="bijv. 06 12345678" required>
+            </div>
+            <div class="form-group">
+              <label>Adres <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
+              <input type="text" id="reg-address" placeholder="Straat, huisnummer, woonplaats">
+            </div>
             <div id="form-error" style="display:none;font-size:0.83rem;color:var(--danger);margin-bottom:8px"></div>
             <button class="btn btn-theme" type="submit" id="submit-btn">Aanmelden →</button>
           </form>`;
@@ -298,6 +306,8 @@
       e.preventDefault();
       const name = document.getElementById('reg-name').value.trim();
       const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const address = document.getElementById('reg-address').value.trim();
       const btn = document.getElementById('submit-btn');
       const errEl = document.getElementById('form-error');
 
@@ -324,7 +334,7 @@
         return;
       }
 
-      await registerForEvent(eventId, { name, email });
+      await registerForEvent(eventId, { name, email, phone, address });
 
       document.getElementById('form-area').innerHTML = `
         <div class="success-block">
