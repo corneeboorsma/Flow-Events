@@ -620,12 +620,17 @@
             </tr>`).join('');
 
       main.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn btn-outline btn-sm" onclick="renderRegistrationsOverview()">← Terug</button>
           <div class="admin-section-title" style="margin-bottom:0">
             <a href="event.html?id=${ev.id}" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dashed var(--accent)" title="Bekijk eventpagina">${ev.title}</a>
           </div>
           <span class="status-pill published" style="background:${theme.accent}22;color:${theme.accent}">${theme.emoji} ${theme.label}</span>
+        </div>
+        <div style="font-size:0.9rem;color:var(--text-mid);margin-bottom:24px;display:flex;gap:16px;flex-wrap:wrap">
+          <span>📅 ${formatDate(ev.date)}</span>
+          ${ev.time ? `<span>🕐 ${ev.time}</span>` : ''}
+          ${ev.location ? `<span>📍 ${ev.location}</span>` : ''}
         </div>
 
         <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
