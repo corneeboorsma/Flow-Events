@@ -82,19 +82,43 @@
     }
 
     .theme-option {
-      border: 2px solid var(--border);
+      border: 3px solid transparent;
       border-radius: var(--radius-sm);
-      padding: 12px 8px;
+      padding: 0;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
       background: var(--bg-soft);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 3/4;
     }
-    .theme-option:hover { border-color: var(--accent); }
-    .theme-option.selected { border-color: var(--primary); background: var(--accent-light); }
+    .theme-option:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .theme-option.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
 
-    .theme-option-emoji { font-size: 1.5rem; display: block; margin-bottom: 4px; }
-    .theme-option-label { font-size: 0.72rem; font-weight: 600; color: var(--text-mid); }
+    .theme-option-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .theme-option:hover .theme-option-img { transform: scale(1.05); }
+
+    .theme-option-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 8px 6px;
+      background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+    }
+
+    .theme-option-emoji { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+    .theme-option-label { font-size: 0.7rem; font-weight: 700; color: #fff; letter-spacing: 0.05em; text-transform: uppercase; }
 
     .wizard-nav {
       display: flex;
@@ -481,8 +505,12 @@
     function renderThemeGrid() {
       document.getElementById('theme-grid').innerHTML = Object.entries(THEMES).map(([key, t]) => `
         <div class="theme-option ${selectedTheme === key ? 'selected' : ''}" onclick="selectTheme('${key}')">
-          <span class="theme-option-emoji">${t.emoji}</span>
-          <span class="theme-option-label">${t.label}</span>
+          <img class="theme-option-img" src="${t.img}" alt="${t.label}" loading="lazy">
+          <div class="theme-option-overlay" style="background:linear-gradient(to top, ${t.accent}cc 0%, ${t.accent}33 50%, transparent 100%)">
+            <span class="theme-option-emoji">${t.emoji}</span>
+            <span class="theme-option-label">${t.label}</span>
+          </div>
+          ${selectedTheme === key ? `<div style="position:absolute;top:6px;right:6px;background:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--primary);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.2)">✓</div>` : ''}
         </div>
       `).join('');
     }
