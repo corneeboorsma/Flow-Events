@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event — Flow Coffeebar</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: var(--theme-bg, var(--bg));
+      color: var(--theme-text, var(--text));
+      transition: background 0.4s, color 0.4s;
+    }
+
+    .event-hero {
+      background: var(--theme-hero, var(--accent-light));
+      padding: 56px 24px 48px;
+      text-align: center;
+    }
+
+    .event-theme-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+      background: var(--theme-accent, var(--primary));
+      color: #fff;
+    }
+
+    .event-title {
+      font-size: 2.4rem;
+      font-style: italic;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      color: var(--theme-text, var(--text));
+    }
+
+    .event-meta-row {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+      opacity: 0.8;
+    }
+    .event-meta-row span { display: flex; align-items: center; gap: 5px; }
+
+    .event-body {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .event-description {
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 36px;
+      opacity: 0.85;
+    }
+
+    .register-card {
+      background: var(--theme-card, var(--white));
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .register-title {
+      font-size: 1.4rem;
+      font-style: italic;
+      margin-bottom: 6px;
+      color: var(--theme-text, var(--text));
+    }
+
+    .register-sub {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      margin-bottom: 24px;
+    }
+
+    .spots-bar-wrap {
+      margin-bottom: 24px;
+    }
+
+    .spots-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+      opacity: 0.7;
+    }
+
+    .spots-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .spots-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--theme-accent, var(--primary));
+      transition: width 0.5s;
+    }
+
+    .register-form .form-group label {
+      color: var(--theme-text, var(--text-mid));
+      opacity: 0.7;
+    }
+
+    .register-form .form-group input {
+      background: rgba(0,0,0,0.04);
+      border-color: rgba(0,0,0,0.1);
+      color: var(--theme-text, var(--text));
+    }
+
+    .register-form .form-group input:focus {
+      border-color: var(--theme-accent, var(--primary));
+      background: rgba(255,255,255,0.8);
+    }
+
+    .btn-theme {
+      background: var(--theme-accent, var(--primary));
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+      margin-top: 8px;
+      border: none;
+    }
+    .btn-theme:hover { filter: brightness(0.9); }
+    .btn-theme:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .success-block {
+      text-align: center;
+      padding: 32px 0 8px;
+    }
+    .success-block .big-emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
+    .success-block h3 { font-size: 1.4rem; font-style: italic; margin-bottom: 8px; }
+    .success-block p { font-size: 0.9rem; opacity: 0.7; }
+
+    .full-block {
+      text-align: center;
+      padding: 24px;
+      background: rgba(0,0,0,0.04);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--theme-accent, var(--primary));
+      text-decoration: none;
+      font-weight: 500;
+      margin-bottom: 28px;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .loading-state { text-align: center; padding: 80px 24px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <header class="header" style="background:var(--theme-card,var(--white));border-color:rgba(0,0,0,0.08)">
+    <div class="header-spacer"></div>
+    <div class="header-logo">
+      <div>
+        <div class="script" style="color:var(--theme-accent,var(--primary))">flow</div>
+        <div class="subtitle">Coffeebar</div>
+      </div>
+    </div>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div id="page-content">
+    <div class="loading-state">
+      <span style="font-size:2rem">☕</span>
+      <p style="margin-top:12px">Laden...</p>
+    </div>
+  </div>
+
+  <script src="events.js"></script>
+  <script>
+    async function init() {
+      const params = new URLSearchParams(location.search);
+      const eventId = params.get('id');
+
+      if (!eventId) {
+        location.href = 'events.html';
+        return;
+      }
+
+      const ev = await getEvent(eventId);
+      if (!ev || ev.status !== 'published') {
+        document.getElementById('page-content').innerHTML = `
+          <div class="loading-state">
+            <span style="font-size:2rem">🔍</span>
+            <p style="margin-top:12px">Dit evenement bestaat niet of is niet meer beschikbaar.</p>
+            <a href="events.html" style="color:var(--primary);display:block;margin-top:16px">← Terug naar events</a>
+          </div>`;
+        return;
+      }
+
+      applyTheme(ev.theme);
+      const theme = THEMES[ev.theme] || THEMES.flow;
+      document.title = `${ev.title} — Flow Coffeebar`;
+
+      const regs = await getRegistrations(eventId);
+      const left = ev.maxAttendees ? Math.max(0, ev.maxAttendees - regs.length) : null;
+      const isFull = left === 0;
+      const fillPct = ev.maxAttendees ? Math.min(100, (regs.length / ev.maxAttendees) * 100) : 0;
+
+      let spotsHtml = '';
+      if (ev.maxAttendees) {
+        spotsHtml = `
+          <div class="spots-bar-wrap">
+            <div class="spots-bar-label">
+              <span>${regs.length} aangemeld</span>
+              <span>${left} vrij van ${ev.maxAttendees}</span>
+            </div>
+            <div class="spots-bar">
+              <div class="spots-bar-fill" style="width:${fillPct}%"></div>
+            </div>
+          </div>`;
+      }
+
+      let formHtml = '';
+      if (isFull) {
+        formHtml = `<div class="full-block">Dit evenement is volgeboekt. Volg ons voor nieuwe evenementen!</div>`;
+      } else {
+        formHtml = `
+          <form class="register-form" id="register-form" onsubmit="submitForm(event,'${eventId}')">
+            <div class="form-group">
+              <label>Naam</label>
+              <input type="text" id="reg-name" placeholder="Jouw naam" required>
+            </div>
+            <div class="form-group">
+              <label>E-mail</label>
+              <input type="email" id="reg-email" placeholder="jouw@email.be" required>
+            </div>
+            <div id="form-error" style="display:none;font-size:0.83rem;color:var(--danger);margin-bottom:8px"></div>
+            <button class="btn btn-theme" type="submit" id="submit-btn">Aanmelden →</button>
+          </form>`;
+      }
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="event-hero">
+          <div class="event-theme-label">${theme.emoji} ${theme.label}</div>
+          <h1 class="event-title">${ev.title}</h1>
+          <div class="event-meta-row">
+            <span>📅 ${formatDate(ev.date)}</span>
+            ${ev.time ? `<span>🕐 ${ev.time}</span>` : ''}
+            ${ev.location ? `<span>📍 ${ev.location}</span>` : ''}
+          </div>
+        </div>
+        <div class="event-body">
+          <a class="back-link" href="events.html">← Alle evenementen</a>
+          ${ev.description ? `<div class="event-description">${ev.description}</div>` : ''}
+          <div class="register-card">
+            <div class="register-title">Aanmelden</div>
+            <div class="register-sub">Reserveer jouw plek voor dit evenement.</div>
+            ${spotsHtml}
+            <div id="form-area">${formHtml}</div>
+          </div>
+        </div>`;
+    }
+
+    async function submitForm(e, eventId) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('form-error');
+
+      btn.disabled = true;
+      btn.textContent = 'Bezig...';
+      errEl.style.display = 'none';
+
+      const regs = await getRegistrations(eventId);
+      const ev = await getEvent(eventId);
+      if (ev.maxAttendees && regs.length >= ev.maxAttendees) {
+        errEl.textContent = 'Helaas, dit evenement is net volgeboekt.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Aanmelden →';
+        return;
+      }
+
+      const duplicate = regs.find(r => r.email.toLowerCase() === email.toLowerCase());
+      if (duplicate) {
+        errEl.textContent = 'Dit e-mailadres is al aangemeld voor dit evenement.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Aanmelden →';
+        return;
+      }
+
+      await registerForEvent(eventId, { name, email });
+
+      document.getElementById('form-area').innerHTML = `
+        <div class="success-block">
+          <span class="big-emoji">🎉</span>
+          <h3>Je bent aangemeld!</h3>
+          <p>We zien je graag op ${formatDate(ev.date)}${ev.time ? ' om ' + ev.time : ''}.<br>Tot dan bij Flow Coffeebar!</p>
+        </div>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>

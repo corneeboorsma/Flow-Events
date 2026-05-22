@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Preview — Flow Events</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: #f5f5f5; }
+
+    .preview-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preview-header h1 { font-size: 1.4rem; font-style: italic; }
+    .preview-header p { font-size: 0.85rem; color: var(--text-light); margin-top: 2px; }
+
+    .themes-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 28px;
+      padding: 36px 32px 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .theme-card {
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .theme-hero-preview {
+      padding: 28px 24px 24px;
+      text-align: center;
+    }
+
+    .theme-label-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 30px;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .theme-preview-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .theme-preview-meta {
+      font-size: 0.8rem;
+      opacity: 0.65;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .theme-card-body {
+      padding: 20px 22px;
+      background: var(--white);
+    }
+
+    .theme-card-name {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 14px;
+    }
+
+    .color-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .swatch-label {
+      font-size: 0.6rem;
+      color: var(--text-light);
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .theme-preview-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .theme-reg-card {
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 4px;
+    }
+
+    .theme-reg-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .theme-reg-input {
+      width: 100%;
+      border-radius: 8px;
+      border: 1.5px solid rgba(0,0,0,0.1);
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-family: 'Inter', sans-serif;
+      margin-top: 8px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="preview-header">
+  <div>
+    <h1>Theme Preview</h1>
+    <p>Alle 8 Flow Events thema's — bekijk kleuren, sfeer en UI elementen</p>
+  </div>
+  <a href="events-admin.html" class="btn btn-outline btn-sm">← Admin</a>
+</div>
+
+<div class="themes-wrap" id="themes-wrap"></div>
+
+<script src="events.js"></script>
+<script>
+  const wrap = document.getElementById('themes-wrap');
+
+  Object.entries(THEMES).forEach(([key, t]) => {
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+
+    card.innerHTML = `
+      <!-- Hero -->
+      <div class="theme-hero-preview" style="background:${t.hero};color:${t.text}">
+        <div class="theme-label-pill" style="background:${t.accent}">${t.emoji} ${t.label}</div>
+        <div class="theme-preview-title" style="color:${t.text}">Een avond bij Flow</div>
+        <div class="theme-preview-meta">
+          <span>📅 vrijdag 13 juni</span>
+          <span>🕐 20:00</span>
+          <span>📍 Flow Coffeebar</span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="theme-card-body">
+        <div class="theme-card-name">${key.toUpperCase()} — kleuren</div>
+
+        <div class="color-row">
+          <div class="color-swatch">
+            <div class="swatch" style="background:${t.bg}"></div>
+            <span class="swatch-label">bg</span>
+          </div>
+          <div class="color-swatch">
+            <div class="swatch" style="background:${t.accent}"></div>
+            <span class="swatch-label">accent</span>
+          </div>
+          <div class="color-swatch">
+            <div class="swatch" style="background:${t.text}"></div>
+            <span class="swatch-label">text</span>
+          </div>
+          <div class="color-swatch">
+            <div class="swatch" style="background:${t.card}; border:1px solid #ddd"></div>
+            <span class="swatch-label">card</span>
+          </div>
+        </div>
+
+        <!-- Button preview -->
+        <button class="theme-preview-btn" style="background:${t.accent}">Aanmelden →</button>
+
+        <!-- Register card preview -->
+        <div class="theme-reg-card" style="background:${t.card};border:1px solid rgba(0,0,0,0.06)">
+          <div class="theme-reg-title" style="color:${t.text}">Aanmelden</div>
+          <input class="theme-reg-input" placeholder="Jouw naam" style="background:${t.bg};color:${t.text}" readonly>
+          <input class="theme-reg-input" placeholder="jouw@email.be" style="background:${t.bg};color:${t.text}" readonly>
+        </div>
+      </div>
+    `;
+
+    wrap.appendChild(card);
+  });
+</script>
+</body>
+</html>

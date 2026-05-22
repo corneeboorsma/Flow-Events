@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events Admin — Flow Coffeebar</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ─── WIZARD ─── */
+    .wizard-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+      z-index: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .wizard-overlay.open { opacity: 1; pointer-events: all; }
+
+    .wizard {
+      background: var(--white);
+      border-radius: 28px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 36px 32px 32px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.97);
+      transition: transform 0.3s;
+    }
+    .wizard-overlay.open .wizard { transform: scale(1); }
+
+    .wizard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .wizard-title { font-size: 1.5rem; font-style: italic; }
+
+    .wizard-steps {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+
+    .wizard-step-dot {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .wizard-step-dot.active { background: var(--primary); }
+    .wizard-step-dot.done { background: var(--accent); }
+
+    .wizard-step { display: none; }
+    .wizard-step.visible { display: block; }
+
+    .wizard-step-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 16px;
+    }
+
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .theme-option {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg-soft);
+    }
+    .theme-option:hover { border-color: var(--accent); }
+    .theme-option.selected { border-color: var(--primary); background: var(--accent-light); }
+
+    .theme-option-emoji { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+    .theme-option-label { font-size: 0.72rem; font-weight: 600; color: var(--text-mid); }
+
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+      gap: 12px;
+    }
+
+    /* ─── EVENT LIST ─── */
+    .event-row {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: box-shadow 0.2s;
+    }
+    .event-row:hover { box-shadow: var(--shadow-sm); }
+
+    .event-row-theme {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .event-row-info { flex: 1; min-width: 0; }
+    .event-row-title { font-weight: 600; font-size: 0.95rem; }
+    .event-row-meta { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+
+    .status-pill {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .status-pill.draft { background: var(--bg-soft); color: var(--text-light); }
+    .status-pill.published { background: #e8f5ec; color: var(--success); }
+
+    /* ─── REGISTRATIONS PANEL ─── */
+    .reg-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .reg-row:last-child { border-bottom: none; }
+    .reg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .reg-name { font-weight: 600; }
+    .reg-email { color: var(--text-light); font-size: 0.8rem; }
+    .reg-time { font-size: 0.75rem; color: var(--text-light); margin-left: auto; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-spacer"></div>
+    <div class="header-logo">
+      <div>
+        <div class="script">flow</div>
+        <div class="subtitle">Coffeebar</div>
+      </div>
+    </div>
+    <div class="header-spacer"></div>
+  </header>
+
+  <div class="admin-layout">
+    <nav class="admin-sidebar">
+      <button class="admin-nav-item active" data-section="events">📅 Events</button>
+      <button class="admin-nav-item" data-section="registrations">👥 Aanmeldingen</button>
+    </nav>
+
+    <main class="admin-content" id="admin-main"></main>
+  </div>
+
+  <!-- ─── WIZARD ─── -->
+  <div class="wizard-overlay" id="wizard-overlay">
+    <div class="wizard">
+      <div class="wizard-header">
+        <h2 class="wizard-title" id="wizard-title">Nieuw event</h2>
+        <button class="modal-close" onclick="closeWizard()">✕</button>
+      </div>
+
+      <div class="wizard-steps" id="wizard-dots"></div>
+
+      <!-- Step 1: Thema -->
+      <div class="wizard-step" id="step-1">
+        <div class="wizard-step-title">Stap 1 van 3 — Kies een thema</div>
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+
+      <!-- Step 2: Details -->
+      <div class="wizard-step" id="step-2">
+        <div class="wizard-step-title">Stap 2 van 3 — Event details</div>
+        <div class="form-group">
+          <label>Titel</label>
+          <input type="text" id="w-title" placeholder="bijv. Snow Night bij Flow">
+        </div>
+        <div class="form-group">
+          <label>Beschrijving</label>
+          <textarea id="w-desc" rows="3" placeholder="Vertel iets over dit event..." style="width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.92rem;background:var(--bg-soft);outline:none;resize:none"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Datum</label>
+            <input type="date" id="w-date">
+          </div>
+          <div class="form-group">
+            <label>Tijdstip</label>
+            <input type="time" id="w-time">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Locatie</label>
+          <input type="text" id="w-location" placeholder="bijv. Flow Coffeebar, Enschede">
+        </div>
+      </div>
+
+      <!-- Step 3: Capaciteit & publiceren -->
+      <div class="wizard-step" id="step-3">
+        <div class="wizard-step-title">Stap 3 van 3 — Capaciteit & publiceren</div>
+        <div class="form-group">
+          <label>Max. deelnemers (leeg = onbeperkt)</label>
+          <input type="number" id="w-max" min="1" placeholder="bijv. 30">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="w-status">
+            <option value="draft">Concept (niet zichtbaar)</option>
+            <option value="published">Gepubliceerd (zichtbaar)</option>
+          </select>
+        </div>
+        <div id="wizard-preview" style="margin-top:20px;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-soft);font-size:0.85rem;line-height:1.7;color:var(--text-mid)"></div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-outline" id="wizard-back" onclick="wizardBack()">← Terug</button>
+        <button class="btn btn-primary" id="wizard-next" onclick="wizardNext()">Volgende →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="events.js"></script>
+  <script>
+    let currentSection = 'events';
+    let wizardStep = 1;
+    const TOTAL_STEPS = 3;
+    let selectedTheme = '';
+    let editingEventId = null;
+
+    // ─── NAV ───
+    document.querySelectorAll('.admin-nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        currentSection = item.dataset.section;
+        if (currentSection === 'events') renderEvents();
+        if (currentSection === 'registrations') renderRegistrationsOverview();
+      });
+    });
+
+    // ─── EVENTS LIST ───
+    async function renderEvents() {
+      const main = document.getElementById('admin-main');
+      main.innerHTML = `<div class="admin-section-title">Events</div><p style="color:var(--text-light)">Laden...</p>`;
+
+      const events = await getEvents();
+      events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      main.innerHTML = `
+        <div class="admin-section-title">Events</div>
+        <div style="margin-bottom:20px">
+          <button class="btn btn-primary" onclick="openWizard()">+ Nieuw event</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px" id="event-list">
+          ${events.length === 0
+            ? '<div class="empty-state"><span class="big-emoji">📅</span><p>Nog geen events aangemaakt.</p></div>'
+            : events.map(ev => {
+                const theme = THEMES[ev.theme] || THEMES.flow;
+                return `
+                  <div class="event-row">
+                    <div class="event-row-theme" style="background:${theme.accent}"></div>
+                    <div class="event-row-info">
+                      <div class="event-row-title">${ev.title}</div>
+                      <div class="event-row-meta">${theme.emoji} ${theme.label} · ${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''}</div>
+                    </div>
+                    <span class="status-pill ${ev.status}">${ev.status === 'published' ? 'Gepubliceerd' : 'Concept'}</span>
+                    <button class="btn-icon" onclick="editEvent('${ev.id}')" title="Bewerken">✏️</button>
+                    <button class="btn-icon" onclick="viewRegistrations('${ev.id}')" title="Aanmeldingen">👥</button>
+                    <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="Verwijderen">🗑️</button>
+                  </div>`;
+              }).join('')
+          }
+        </div>`;
+    }
+
+    async function removeEvent(id) {
+      if (!confirm('Event verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+      await deleteEvent(id);
+      renderEvents();
+    }
+
+    async function editEvent(id) {
+      const ev = await getEvent(id);
+      if (!ev) return;
+      editingEventId = id;
+      openWizard(ev);
+    }
+
+    // ─── WIZARD ───
+    function openWizard(existing) {
+      editingEventId = existing ? existing.id : null;
+      wizardStep = 1;
+      selectedTheme = existing ? existing.theme : '';
+
+      document.getElementById('wizard-title').textContent = existing ? 'Event bewerken' : 'Nieuw event';
+
+      if (existing) {
+        document.getElementById('w-title').value = existing.title || '';
+        document.getElementById('w-desc').value = existing.description || '';
+        document.getElementById('w-date').value = existing.date || '';
+        document.getElementById('w-time').value = existing.time || '';
+        document.getElementById('w-location').value = existing.location || '';
+        document.getElementById('w-max').value = existing.maxAttendees || '';
+        document.getElementById('w-status').value = existing.status || 'draft';
+      } else {
+        document.getElementById('w-title').value = '';
+        document.getElementById('w-desc').value = '';
+        document.getElementById('w-date').value = '';
+        document.getElementById('w-time').value = '';
+        document.getElementById('w-location').value = '';
+        document.getElementById('w-max').value = '';
+        document.getElementById('w-status').value = 'draft';
+      }
+
+      renderThemeGrid();
+      updateWizardStep();
+      document.getElementById('wizard-overlay').classList.add('open');
+    }
+
+    function closeWizard() {
+      document.getElementById('wizard-overlay').classList.remove('open');
+    }
+
+    document.getElementById('wizard-overlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeWizard();
+    });
+
+    function renderThemeGrid() {
+      document.getElementById('theme-grid').innerHTML = Object.entries(THEMES).map(([key, t]) => `
+        <div class="theme-option ${selectedTheme === key ? 'selected' : ''}" onclick="selectTheme('${key}')">
+          <span class="theme-option-emoji">${t.emoji}</span>
+          <span class="theme-option-label">${t.label}</span>
+        </div>
+      `).join('');
+    }
+
+    function selectTheme(key) {
+      selectedTheme = key;
+      renderThemeGrid();
+    }
+
+    function updateWizardStep() {
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const el = document.getElementById(`step-${i}`);
+        el.classList.toggle('visible', i === wizardStep);
+      }
+
+      const dots = document.getElementById('wizard-dots');
+      dots.innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+        const cls = i + 1 < wizardStep ? 'done' : i + 1 === wizardStep ? 'active' : '';
+        return `<div class="wizard-step-dot ${cls}"></div>`;
+      }).join('');
+
+      document.getElementById('wizard-back').style.visibility = wizardStep === 1 ? 'hidden' : 'visible';
+
+      const nextBtn = document.getElementById('wizard-next');
+      if (wizardStep === TOTAL_STEPS) {
+        nextBtn.textContent = editingEventId ? 'Opslaan ✓' : 'Aanmaken ✓';
+      } else {
+        nextBtn.textContent = 'Volgende →';
+      }
+
+      if (wizardStep === TOTAL_STEPS) updatePreview();
+    }
+
+    function updatePreview() {
+      const theme = THEMES[selectedTheme] || THEMES.flow;
+      const title = document.getElementById('w-title').value || '—';
+      const date = document.getElementById('w-date').value;
+      const time = document.getElementById('w-time').value;
+      const location = document.getElementById('w-location').value;
+      const max = document.getElementById('w-max').value;
+
+      document.getElementById('wizard-preview').innerHTML = `
+        <strong>${theme.emoji} ${theme.label}</strong> — ${title}<br>
+        ${date ? '📅 ' + formatDate(date) : ''} ${time ? '· 🕐 ' + time : ''}<br>
+        ${location ? '📍 ' + location + '<br>' : ''}
+        ${max ? '👥 Max. ' + max + ' deelnemers' : '👥 Onbeperkt'}
+      `;
+    }
+
+    function wizardBack() {
+      if (wizardStep > 1) { wizardStep--; updateWizardStep(); }
+    }
+
+    async function wizardNext() {
+      if (wizardStep === 1) {
+        if (!selectedTheme) { alert('Kies een thema om verder te gaan.'); return; }
+        wizardStep++;
+        updateWizardStep();
+        return;
+      }
+
+      if (wizardStep === 2) {
+        const title = document.getElementById('w-title').value.trim();
+        const date = document.getElementById('w-date').value;
+        if (!title || !date) { alert('Vul minstens een titel en datum in.'); return; }
+        wizardStep++;
+        updateWizardStep();
+        return;
+      }
+
+      if (wizardStep === TOTAL_STEPS) {
+        await saveEvent();
+      }
+    }
+
+    async function saveEvent() {
+      const btn = document.getElementById('wizard-next');
+      btn.disabled = true;
+      btn.textContent = 'Bezig...';
+
+      const maxVal = document.getElementById('w-max').value;
+      const data = {
+        theme: selectedTheme,
+        title: document.getElementById('w-title').value.trim(),
+        description: document.getElementById('w-desc').value.trim(),
+        date: document.getElementById('w-date').value,
+        time: document.getElementById('w-time').value,
+        location: document.getElementById('w-location').value.trim(),
+        maxAttendees: maxVal ? parseInt(maxVal) : null,
+        status: document.getElementById('w-status').value,
+      };
+
+      if (editingEventId) {
+        await updateEvent(editingEventId, data);
+      } else {
+        await createEvent(data);
+      }
+
+      closeWizard();
+      renderEvents();
+    }
+
+    // ─── REGISTRATIONS ───
+    async function viewRegistrations(eventId) {
+      document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelector('[data-section="registrations"]').classList.add('active');
+      currentSection = 'registrations';
+      await renderRegistrationsForEvent(eventId);
+    }
+
+    async function renderRegistrationsOverview() {
+      const main = document.getElementById('admin-main');
+      main.innerHTML = `<div class="admin-section-title">Aanmeldingen</div><p style="color:var(--text-light)">Laden...</p>`;
+
+      const events = await getEvents();
+      const published = events.filter(e => e.status === 'published');
+
+      if (published.length === 0) {
+        main.innerHTML = `<div class="admin-section-title">Aanmeldingen</div>
+          <div class="empty-state"><span class="big-emoji">👥</span><p>Geen gepubliceerde events.</p></div>`;
+        return;
+      }
+
+      main.innerHTML = `
+        <div class="admin-section-title">Aanmeldingen</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${published.map(ev => {
+            const theme = THEMES[ev.theme] || THEMES.flow;
+            return `
+              <div class="event-row" style="cursor:pointer" onclick="renderRegistrationsForEvent('${ev.id}')">
+                <div class="event-row-theme" style="background:${theme.accent}"></div>
+                <div class="event-row-info">
+                  <div class="event-row-title">${ev.title}</div>
+                  <div class="event-row-meta">${formatDate(ev.date)}</div>
+                </div>
+                <span style="font-size:0.82rem;color:var(--primary);font-weight:600">Bekijk →</span>
+              </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    async function renderRegistrationsForEvent(eventId) {
+      const main = document.getElementById('admin-main');
+      main.innerHTML = `<p style="color:var(--text-light)">Laden...</p>`;
+
+      const ev = await getEvent(eventId);
+      const regs = await getRegistrations(eventId);
+      const theme = THEMES[ev.theme] || THEMES.flow;
+
+      main.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="renderRegistrationsOverview()">← Terug</button>
+          <div class="admin-section-title" style="margin-bottom:0">${ev.title}</div>
+          <span class="status-pill published" style="background:${theme.accent}22;color:${theme.accent}">${theme.emoji} ${theme.label}</span>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap">
+          <div class="form-card" style="flex:1;min-width:140px;padding:16px 20px">
+            <div style="font-size:0.8rem;color:var(--text-light)">Aangemeld</div>
+            <div style="font-size:1.8rem;font-weight:700;color:var(--primary)">${regs.length}</div>
+          </div>
+          ${ev.maxAttendees ? `
+          <div class="form-card" style="flex:1;min-width:140px;padding:16px 20px">
+            <div style="font-size:0.8rem;color:var(--text-light)">Vrij</div>
+            <div style="font-size:1.8rem;font-weight:700;color:var(--success)">${Math.max(0, ev.maxAttendees - regs.length)}</div>
+          </div>` : ''}
+        </div>
+        <div class="form-card" style="max-width:600px">
+          ${regs.length === 0
+            ? '<div style="text-align:center;padding:32px;color:var(--text-light)">Nog geen aanmeldingen.</div>'
+            : regs.map(r => `
+              <div class="reg-row">
+                <div class="reg-avatar">${r.name.charAt(0).toUpperCase()}</div>
+                <div>
+                  <div class="reg-name">${r.name}</div>
+                  <div class="reg-email">${r.email}</div>
+                </div>
+                <span class="reg-time">${new Date(r.registeredAt).toLocaleDateString('nl-BE', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+              </div>`).join('')
+          }
+        </div>`;
+    }
+
+    // ─── INIT ───
+    renderEvents();
+  </script>
+</body>
+</html>
