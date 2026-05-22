@@ -221,8 +221,8 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 400; }
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 640px) {
-  .header { padding: 0 16px; height: 60px; }
-  .header-logo .script { font-size: 1.7rem; }
+  .header { padding: 0 16px; height: auto; min-height: 64px; }
+  .header-logo .script { font-size: 3rem; }
   .admin-layout { grid-template-columns: 1fr; }
   .admin-sidebar {
     display: flex;

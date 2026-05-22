@@ -186,6 +186,15 @@
     .back-link:hover { text-decoration: underline; }
 
     .loading-state { text-align: center; padding: 80px 24px; opacity: 0.5; }
+
+    @media (max-width: 640px) {
+      .event-hero { padding: 36px 16px 32px; }
+      .event-title { font-size: 1.6rem; }
+      .event-meta-row { font-size: 0.9rem; gap: 12px; }
+      .event-body { padding: 24px 16px 60px; }
+      .register-card { padding: 24px 16px; }
+      .zip-city-grid { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>
@@ -275,7 +284,7 @@
               <label>Straat en huisnummer <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
               <input type="text" id="reg-street" placeholder="bijv. Kerkstraat 12">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px" class="zip-city-grid">
               <div class="form-group">
                 <label>Postcode <span style="font-weight:400;opacity:0.5">(optioneel)</span></label>
                 <input type="text" id="reg-zip" placeholder="bijv. 7521 AB">
