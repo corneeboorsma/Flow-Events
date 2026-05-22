@@ -225,6 +225,7 @@
   <script src="events.js"></script>
   <script>
     async function init() {
+      await loadThemes();
       const params = new URLSearchParams(location.search);
       const eventId = params.get('id');
 

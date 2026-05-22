@@ -271,7 +271,7 @@
     </div>
     <div class="header-spacer" style="display:flex;justify-content:flex-end;align-items:center;gap:10px">
       <a href="events.html" class="btn btn-outline btn-sm" target="_blank">🌐 Publieke pagina</a>
-      <a href="theme-preview.html" class="btn btn-outline btn-sm" target="_blank">🎨 Thema's</a>
+      <a href="themes-admin.html" class="btn btn-outline btn-sm" target="_blank">🎨 Thema's</a>
     </div>
   </header>
 
@@ -1062,7 +1062,7 @@
     }
 
     // ─── INIT ───
-    renderEvents();
+    loadThemes().then(() => renderEvents());
   </script>
   <footer class="footer">Flow Coffeebar &nbsp;|&nbsp; Grotestraat 38 &nbsp;|&nbsp; 7461 KG &nbsp;|&nbsp; Rijssen</footer>
 

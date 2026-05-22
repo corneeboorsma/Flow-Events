@@ -33,7 +33,7 @@ async function fbDelete(path) {
 }
 
 // ─── THEMES ───
-const THEMES = {
+const THEMES_DEFAULT = {
   snow:  { label: 'Snow',  emoji: '❄️',  bg: '#f4f8fb', accent: '#7fb3cc', text: '#2a3d4a', hero: 'linear-gradient(135deg, #eaf4fa 0%, #d6eaf5 100%)', card: '#ffffff', img: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=800&q=80' },
   show:  { label: 'Show',  emoji: '🎭',  bg: '#fdf6ff', accent: '#b57ecf', text: '#2d1a3a', hero: 'linear-gradient(135deg, #f9eeff 0%, #eedff7 100%)', card: '#ffffff', img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80' },
   grow:  { label: 'Grow',  emoji: '🌱',  bg: '#f5faf2', accent: '#72b06a', text: '#1e2e1a', hero: 'linear-gradient(135deg, #eaf5e6 0%, #d8edcf 100%)', card: '#ffffff', img: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&q=80' },
@@ -43,6 +43,26 @@ const THEMES = {
   glow:  { label: 'Glow',  emoji: '✨',  bg: '#fdfaf2', accent: '#c9973a', text: '#261d08', hero: 'linear-gradient(135deg, #fdf8e1 0%, #f7edbc 100%)', card: '#ffffff', img: 'https://images.unsplash.com/photo-1524117074681-31bd4de22ad3?w=800&q=80' },
   slow:  { label: 'Slow',  emoji: '🌙',  bg: '#f4f5fb', accent: '#8892d4', text: '#1e2040', hero: 'linear-gradient(135deg, #eaedf8 0%, #d8ddf0 100%)', card: '#ffffff', img: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&q=80' },
 };
+
+let THEMES = { ...THEMES_DEFAULT };
+
+async function loadThemes() {
+  const data = await fbGet('themes');
+  if (data) {
+    Object.keys(THEMES_DEFAULT).forEach(key => {
+      if (data[key]) THEMES[key] = { ...THEMES_DEFAULT[key], ...data[key] };
+    });
+  }
+  return THEMES;
+}
+
+async function saveTheme(key, data) {
+  return fbSet(`themes/${key}`, data);
+}
+
+async function resetTheme(key) {
+  return fbDelete(`themes/${key}`);
+}
 
 function applyTheme(themeKey) {
   const theme = THEMES[themeKey] || THEMES.flow;

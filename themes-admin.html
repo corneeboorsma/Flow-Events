@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thema's Beheer — Flow Coffeebar</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: var(--bg-soft); }
+
+    .page-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 36px 24px 80px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .page-title { font-size: 1.6rem; font-style: italic; }
+
+    .theme-editor {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .theme-editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+      gap: 12px;
+    }
+    .theme-editor-header:hover { background: var(--bg-soft); }
+
+    .theme-editor-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .theme-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .theme-editor-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .theme-editor-emoji { font-size: 1.3rem; }
+
+    .theme-modified-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #fff8e1;
+      color: #8a6e00;
+      display: none;
+    }
+    .theme-modified-badge.visible { display: inline-block; }
+
+    .theme-chevron {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .theme-editor.open .theme-chevron { transform: rotate(180deg); }
+
+    .theme-editor-body {
+      display: none;
+      padding: 0 22px 24px;
+      border-top: 1px solid var(--border);
+    }
+    .theme-editor.open .theme-editor-body { display: block; }
+
+    .theme-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+      margin-top: 20px;
+    }
+
+    .theme-field label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      margin-bottom: 6px;
+    }
+
+    .theme-field-desc {
+      font-size: 0.72rem;
+      color: var(--text-light);
+      margin-bottom: 6px;
+    }
+
+    .theme-field input[type="text"],
+    .theme-field input[type="url"] {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--bg-soft);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .theme-field input:focus { border-color: var(--primary); background: var(--white); }
+
+    .theme-field-color {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .theme-field-color input[type="color"] {
+      width: 40px;
+      height: 38px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      cursor: pointer;
+      background: var(--white);
+      flex-shrink: 0;
+    }
+
+    .theme-field-color input[type="text"] {
+      flex: 1;
+    }
+
+    .theme-preview-bar {
+      margin-top: 20px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .theme-preview-hero {
+      padding: 24px 20px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .theme-preview-hero img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.15;
+    }
+
+    .theme-preview-hero > *:not(img) { position: relative; z-index: 1; }
+
+    .theme-preview-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .theme-preview-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.4rem;
+    }
+
+    .theme-preview-card {
+      padding: 16px 20px;
+    }
+
+    .theme-preview-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      margin-top: 12px;
+    }
+
+    .theme-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      .theme-fields { grid-template-columns: 1fr; }
+      .page-wrap { padding: 20px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-spacer"></div>
+    <div class="header-logo">
+      <div>
+        <div class="script">flow</div>
+        <div class="subtitle">Coffeebar</div>
+      </div>
+    </div>
+    <div class="header-spacer" style="display:flex;justify-content:flex-end;align-items:center;gap:10px">
+      <a href="events-admin.html" class="btn btn-outline btn-sm">← Admin</a>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1 class="page-title">Thema's beheren</h1>
+      <p style="font-size:0.85rem;color:var(--text-light)">Wijzigingen worden direct opgeslagen in Firebase.</p>
+    </div>
+    <div id="themes-container">
+      <p style="color:var(--text-light)">Laden...</p>
+    </div>
+  </div>
+
+  <footer class="footer">Flow Coffeebar &nbsp;|&nbsp; Grotestraat 38 &nbsp;|&nbsp; 7461 KG &nbsp;|&nbsp; Rijssen</footer>
+
+  <script src="events.js"></script>
+  <script>
+    const FIELDS = [
+      { key: 'label',  label: 'Naam',         type: 'text',  desc: 'Weergavenaam van het thema' },
+      { key: 'emoji',  label: 'Emoji',         type: 'text',  desc: 'Icoon van het thema' },
+      { key: 'accent', label: 'Accentkleur',   type: 'color', desc: 'Hoofdkleur: knoppen, labels, balk' },
+      { key: 'bg',     label: 'Achtergrond',   type: 'color', desc: 'Pagina-achtergrondkleur' },
+      { key: 'text',   label: 'Tekstkleur',    type: 'color', desc: 'Kleur van de tekst op de pagina' },
+      { key: 'card',   label: 'Kaartkleur',    type: 'color', desc: 'Achtergrond van formulierkaart' },
+      { key: 'hero',   label: 'Hero gradient', type: 'text',  desc: 'CSS gradient voor de hero-sectie', full: true },
+      { key: 'img',    label: 'Foto URL',       type: 'url',   desc: 'Unsplash of andere afbeeldings-URL', full: true },
+    ];
+
+    async function init() {
+      await loadThemes();
+      renderThemes();
+    }
+
+    function renderThemes() {
+      const container = document.getElementById('themes-container');
+      container.innerHTML = Object.keys(THEMES_DEFAULT).map(key => buildEditor(key)).join('');
+    }
+
+    function buildEditor(key) {
+      const t = THEMES[key];
+      const def = THEMES_DEFAULT[key];
+      const isModified = JSON.stringify(t) !== JSON.stringify(def);
+
+      const fieldsHtml = FIELDS.map(f => {
+        const val = t[f.key] || '';
+        const isColor = f.type === 'color';
+        const fullWidth = f.full ? 'grid-column: 1 / -1' : '';
+
+        const input = isColor
+          ? `<div class="theme-field-color">
+               <input type="color" value="${val}" oninput="syncColor('${key}','${f.key}',this,'text')" onchange="updatePreview('${key}')">
+               <input type="text" value="${val}" id="tf-${key}-${f.key}" oninput="syncColor('${key}','${f.key}',this,'color')" onchange="updatePreview('${key}')">
+             </div>`
+          : `<input type="${f.type}" value="${val.replace(/"/g, '&quot;')}" id="tf-${key}-${f.key}" oninput="updatePreview('${key}')">`;
+
+        return `
+          <div class="theme-field" style="${fullWidth}">
+            <label>${f.label}</label>
+            <div class="theme-field-desc">${f.desc}</div>
+            ${input}
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="theme-editor" id="editor-${key}">
+          <div class="theme-editor-header" onclick="toggleEditor('${key}')">
+            <div class="theme-editor-header-left">
+              <div class="theme-swatch" id="swatch-${key}" style="background:${t.accent}"></div>
+              <span class="theme-editor-emoji">${t.emoji}</span>
+              <span class="theme-editor-name">${t.label}</span>
+              <span class="theme-modified-badge ${isModified ? 'visible' : ''}" id="badge-${key}">Aangepast</span>
+            </div>
+            <span class="theme-chevron">▼</span>
+          </div>
+          <div class="theme-editor-body">
+            <div class="theme-fields">${fieldsHtml}</div>
+            <div class="theme-preview-bar" id="preview-${key}"></div>
+            <div class="theme-actions">
+              <button class="btn btn-primary btn-sm" onclick="saveThemeEditor('${key}')">💾 Opslaan</button>
+              <button class="btn btn-outline btn-sm" onclick="resetThemeEditor('${key}')">↺ Terugzetten naar standaard</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function toggleEditor(key) {
+      const el = document.getElementById(`editor-${key}`);
+      const isOpen = el.classList.toggle('open');
+      if (isOpen) updatePreview(key);
+    }
+
+    function syncColor(key, field, source, target) {
+      const val = source.value;
+      if (target === 'text') {
+        document.getElementById(`tf-${key}-${field}`).value = val;
+      } else {
+        // sync color picker
+        const colorInput = source.closest('.theme-field-color').querySelector('input[type="color"]');
+        if (colorInput && /^#[0-9a-f]{6}$/i.test(val)) colorInput.value = val;
+      }
+    }
+
+    function getEditorValues(key) {
+      const t = {};
+      FIELDS.forEach(f => {
+        const el = document.getElementById(`tf-${key}-${f.key}`);
+        if (el) t[f.key] = el.value.trim();
+      });
+      return t;
+    }
+
+    function updatePreview(key) {
+      const t = getEditorValues(key);
+      const previewEl = document.getElementById(`preview-${key}`);
+      const swatchEl = document.getElementById(`swatch-${key}`);
+      if (swatchEl) swatchEl.style.background = t.accent;
+
+      previewEl.innerHTML = `
+        <div class="theme-preview-hero" style="background:${t.hero}">
+          <img src="${t.img}" alt="" loading="lazy" onerror="this.style.display='none'">
+          <div class="theme-preview-pill" style="background:${t.accent}">${t.emoji} ${t.label}</div>
+          <div class="theme-preview-title" style="color:${t.text}">Voorbeeldtitel evenement</div>
+        </div>
+        <div class="theme-preview-card" style="background:${t.card}">
+          <div style="font-size:0.85rem;color:${t.text};opacity:0.7;margin-bottom:8px">Korte beschrijving van het evenement staat hier.</div>
+          <span class="theme-preview-btn" style="background:${t.accent}">Aanmelden →</span>
+        </div>`;
+    }
+
+    async function saveThemeEditor(key) {
+      const data = getEditorValues(key);
+      THEMES[key] = { ...THEMES_DEFAULT[key], ...data };
+      await saveTheme(key, data);
+
+      const badge = document.getElementById(`badge-${key}`);
+      if (badge) badge.classList.add('visible');
+
+      // update header emoji/name live
+      const editor = document.getElementById(`editor-${key}`);
+      editor.querySelector('.theme-editor-emoji').textContent = data.emoji;
+      editor.querySelector('.theme-editor-name').textContent = data.label;
+
+      showToast(`${data.emoji} ${data.label} opgeslagen`);
+    }
+
+    async function resetThemeEditor(key) {
+      if (!confirm(`Thema "${THEMES_DEFAULT[key].label}" terugzetten naar standaard?`)) return;
+      await resetTheme(key);
+      THEMES[key] = { ...THEMES_DEFAULT[key] };
+
+      // rebuild this editor
+      const el = document.getElementById(`editor-${key}`);
+      el.outerHTML = buildEditor(key);
+      // re-open and re-render
+      const newEl = document.getElementById(`editor-${key}`);
+      newEl.classList.add('open');
+      updatePreview(key);
+
+      document.getElementById(`badge-${key}`)?.classList.remove('visible');
+      showToast(`↺ ${THEMES_DEFAULT[key].label} teruggezet`);
+    }
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:30px;font-size:0.85rem;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.2s';
+      document.body.appendChild(t);
+      requestAnimationFrame(() => t.style.opacity = 1);
+      setTimeout(() => { t.style.opacity = 0; setTimeout(() => t.remove(), 200); }, 2200);
+    }
+
+    init();
+  </script>
+</body>
+</html>
