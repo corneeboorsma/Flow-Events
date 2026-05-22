@@ -186,7 +186,7 @@
                 ${theme.emoji} ${theme.label}
               </div>
               <div class="event-card-title">${ev.title}</div>
-              <div class="event-card-desc">${ev.description || ''}</div>
+              <div class="event-card-desc">${(ev.description || '').replace(/<[^>]+>/g, ' ').trim()}</div>
               <div class="event-card-meta">
                 <span>📅 ${formatDate(ev.date)}</span>
                 ${ev.time ? `<span>🕐 ${ev.time}</span>` : ''}

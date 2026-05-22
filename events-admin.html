@@ -6,6 +6,31 @@
   <title>Events Admin — Flow Coffeebar</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    .fmt-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      background: var(--bg-soft);
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-mid);
+    }
+    .fmt-btn:hover { background: var(--border); color: var(--text); }
+
+    #w-desc:empty:before {
+      content: attr(data-placeholder);
+      color: var(--text-light);
+      pointer-events: none;
+    }
+
+    #w-desc ul, #w-desc ol { padding-left: 20px; }
+
     /* ─── WIZARD ─── */
     .wizard-overlay {
       position: fixed;
@@ -325,7 +350,17 @@
         </div>
         <div class="form-group">
           <label>Beschrijving</label>
-          <textarea id="w-desc" rows="3" placeholder="Vertel iets over dit event..." style="width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.92rem;background:var(--bg-soft);outline:none;resize:none"></textarea>
+          <div style="border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:var(--bg-soft)">
+            <div style="display:flex;gap:2px;padding:6px 8px;border-bottom:1px solid var(--border);background:var(--white);flex-wrap:wrap">
+              <button type="button" class="fmt-btn" onclick="fmt('bold')" title="Vet"><b>B</b></button>
+              <button type="button" class="fmt-btn" onclick="fmt('italic')" title="Cursief"><i>I</i></button>
+              <button type="button" class="fmt-btn" onclick="fmt('underline')" title="Onderstrepen"><u>U</u></button>
+              <div style="width:1px;background:var(--border);margin:2px 4px"></div>
+              <button type="button" class="fmt-btn" onclick="fmt('insertUnorderedList')" title="Opsomming">☰</button>
+              <button type="button" class="fmt-btn" onclick="fmt('insertOrderedList')" title="Genummerde lijst">1.</button>
+            </div>
+            <div id="w-desc" contenteditable="true" data-placeholder="Vertel iets over dit event..." style="min-height:80px;padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.92rem;color:var(--text);outline:none;line-height:1.6"></div>
+          </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap" id="ai-toolbar">
             <button type="button" class="btn btn-outline btn-sm" onclick="aiAssist('spelling')" id="ai-btn-spelling">✍️ Spellingcheck</button>
             <button type="button" class="btn btn-outline btn-sm" onclick="aiAssist('enthusiastic')" id="ai-btn-enthusiastic">🚀 Enthousiaster</button>
@@ -471,7 +506,7 @@
 
       if (existing) {
         document.getElementById('w-title').value = existing.title || '';
-        document.getElementById('w-desc').value = existing.description || '';
+        document.getElementById('w-desc').innerHTML = existing.description || '';
         document.getElementById('w-date').value = existing.date || '';
         document.getElementById('w-time').value = existing.time || '';
         document.getElementById('w-duration').value = existing.duration || '';
@@ -484,7 +519,7 @@
         document.getElementById('w-status').value = existing.status || 'draft';
       } else {
         document.getElementById('w-title').value = '';
-        document.getElementById('w-desc').value = '';
+        document.getElementById('w-desc').innerHTML = '';
         document.getElementById('w-date').value = '';
         document.getElementById('w-time').value = '';
         document.getElementById('w-duration').value = '';
@@ -606,7 +641,7 @@
         const data = {
           theme: selectedTheme,
           title: document.getElementById('w-title').value.trim(),
-          description: document.getElementById('w-desc').value.trim(),
+          description: document.getElementById('w-desc').innerHTML.trim(),
           date: document.getElementById('w-date').value,
           time: document.getElementById('w-time').value,
           duration: document.getElementById('w-duration').value.trim(),
@@ -965,7 +1000,7 @@
       wizardStep = 1;
       document.getElementById('wizard-title').textContent = 'Event dupliceren';
       document.getElementById('w-title').value = copy.title;
-      document.getElementById('w-desc').value = copy.description;
+      document.getElementById('w-desc').innerHTML = copy.description;
       document.getElementById('w-date').value = copy.date;
       document.getElementById('w-time').value = copy.time;
       document.getElementById('w-duration').value = copy.duration;
@@ -981,6 +1016,11 @@
       document.getElementById('wizard-overlay').classList.add('open');
     }
 
+    function fmt(cmd) {
+      document.getElementById('w-desc').focus();
+      document.execCommand(cmd, false, null);
+    }
+
     function togglePriceField() {
       const paid = document.getElementById('w-paid').checked;
       document.getElementById('w-price-group').style.display = paid ? 'block' : 'none';
@@ -994,8 +1034,8 @@
     const AI_PROXY_URL = 'https://flow-events-ai.cornee-b.workers.dev';
 
     async function aiAssist(mode) {
-      const textarea = document.getElementById('w-desc');
-      const text = textarea.value.trim();
+      const editor = document.getElementById('w-desc');
+      const text = editor.innerText.trim();
       if (!text) { alert('Vul eerst een beschrijving in.'); return; }
 
       const btns = ['spelling', 'enthusiastic', 'friendly'].map(m => document.getElementById(`ai-btn-${m}`));
@@ -1012,7 +1052,7 @@
         });
         if (!res.ok) throw new Error(await res.text());
         const { result } = await res.json();
-        textarea.value = result;
+        editor.innerHTML = result.replace(/\n/g, '<br>');
       } catch (err) {
         alert('AI-fout: ' + err.message);
       } finally {
