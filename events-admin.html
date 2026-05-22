@@ -359,7 +359,11 @@
         </div>
         <div class="form-group" id="w-price-group" style="display:none">
           <label>Prijs per persoon (€)</label>
-          <input type="number" id="w-price" min="0" step="0.01" placeholder="bijv. 12.50">
+          <input type="text" id="w-price" placeholder="bijv. 12,50" inputmode="decimal" style="width:100%">
+          <div style="margin-top:10px">
+            <label style="font-size:0.78rem;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:7px">Inclusief <span style="font-weight:400;opacity:0.5;text-transform:none">(optioneel)</span></label>
+            <input type="text" id="w-includes" placeholder="bijv. koffie en consumptie">
+          </div>
         </div>
       </div>
 
@@ -474,6 +478,7 @@
         document.getElementById('w-location').value = existing.location || '';
         document.getElementById('w-paid').checked = !!existing.price;
         document.getElementById('w-price').value = existing.price || '';
+        document.getElementById('w-includes').value = existing.includes || '';
         document.getElementById('w-price-group').style.display = existing.price ? 'block' : 'none';
         document.getElementById('w-max').value = existing.maxAttendees || '';
         document.getElementById('w-status').value = existing.status || 'draft';
@@ -486,6 +491,7 @@
         document.getElementById('w-location').value = 'Flow Coffeebar, Rijssen';
         document.getElementById('w-paid').checked = false;
         document.getElementById('w-price').value = '';
+        document.getElementById('w-includes').value = '';
         document.getElementById('w-price-group').style.display = 'none';
       }
 
@@ -552,13 +558,14 @@
       const duration = document.getElementById('w-duration').value;
       const location = document.getElementById('w-location').value;
       const max = document.getElementById('w-max').value;
-      const price = document.getElementById('w-paid').checked ? document.getElementById('w-price').value : null;
+      const price = document.getElementById('w-paid').checked ? document.getElementById('w-price').value.replace(',', '.') : null;
+      const includes = document.getElementById('w-paid').checked ? document.getElementById('w-includes').value.trim() : null;
 
       document.getElementById('wizard-preview').innerHTML = `
         <strong>${theme.emoji} ${theme.label}</strong> — ${title}<br>
         ${date ? '📅 ' + formatDate(date) : ''} ${time ? '· 🕐 ' + time : ''} ${duration ? '· ⏱ ' + duration : ''}<br>
         ${location ? '📍 ' + location + '<br>' : ''}
-        ${price ? '💶 € ' + parseFloat(price).toFixed(2) + ' p.p.<br>' : ''}
+        ${price ? '💶 € ' + parseFloat(price).toFixed(2) + ' p.p.' + (includes ? ' <span style="opacity:0.6">(incl. ' + includes + ')</span>' : '') + '<br>' : ''}
         ${max ? '👥 Max. ' + max + ' deelnemers' : '👥 Onbeperkt'}
       `;
     }
@@ -595,7 +602,9 @@
       btn.textContent = 'Bezig...';
 
       const maxVal = document.getElementById('w-max').value;
-      const priceVal = document.getElementById('w-paid').checked ? document.getElementById('w-price').value : '';
+      const isPaid = document.getElementById('w-paid').checked;
+      const priceRaw = isPaid ? document.getElementById('w-price').value.trim().replace(',', '.') : '';
+      const includesVal = isPaid ? document.getElementById('w-includes').value.trim() : '';
       const data = {
         theme: selectedTheme,
         title: document.getElementById('w-title').value.trim(),
@@ -604,7 +613,8 @@
         time: document.getElementById('w-time').value,
         duration: document.getElementById('w-duration').value.trim(),
         location: document.getElementById('w-location').value.trim(),
-        price: priceVal ? parseFloat(priceVal) : null,
+        price: priceRaw ? parseFloat(priceRaw) : null,
+        includes: includesVal || null,
         maxAttendees: maxVal ? parseInt(maxVal) : null,
         status: document.getElementById('w-status').value,
       };
@@ -959,6 +969,7 @@
       document.getElementById('w-location').value = copy.location;
       document.getElementById('w-paid').checked = !!ev.price;
       document.getElementById('w-price').value = ev.price || '';
+      document.getElementById('w-includes').value = ev.includes || '';
       document.getElementById('w-price-group').style.display = ev.price ? 'block' : 'none';
       document.getElementById('w-max').value = copy.maxAttendees || '';
       document.getElementById('w-status').value = 'draft';
@@ -970,7 +981,10 @@
     function togglePriceField() {
       const paid = document.getElementById('w-paid').checked;
       document.getElementById('w-price-group').style.display = paid ? 'block' : 'none';
-      if (!paid) document.getElementById('w-price').value = '';
+      if (!paid) {
+        document.getElementById('w-price').value = '';
+        document.getElementById('w-includes').value = '';
+      }
     }
 
     // ─── AI ASSIST ───
